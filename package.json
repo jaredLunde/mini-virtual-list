@@ -9,7 +9,15 @@
   "keywords": [
     "react",
     "react component",
-    "mini virtual list"
+    "mini virtual list",
+    "virtualized list",
+    "virtual list",
+    "virtual list component",
+    "virtualized list component",
+    "react virtual list",
+    "react virtualized list",
+    "react virtual list component",
+    "react virtualized list component"
   ],
   "main": "dist/main/index.js",
   "module": "dist/module/index.js",
