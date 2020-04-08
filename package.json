@@ -5,7 +5,7 @@
   "repository": "github:jaredLunde/mini-virtual-list",
   "bugs": "https://github.com/jaredLunde/mini-virtual-list/issues",
   "license": "MIT",
-  "description": "",
+  "description": "A tiny, dynamic list virtualization library for React",
   "keywords": [
     "react",
     "react component",
@@ -53,6 +53,7 @@
     "@testing-library/react": "latest",
     "@testing-library/react-hooks": "latest",
     "@types/jest": "latest",
+    "@types/node": "^13.11.0",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "@typescript-eslint/eslint-plugin": "latest",
@@ -74,7 +75,12 @@
     "ts-jest": "latest",
     "typescript": "latest"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@essentials/memoize-one": "^1.0.2",
+    "@essentials/one-key-map": "^1.0.1",
+    "@react-hook/passive-layout-effect": "^1.0.3",
+    "trie-memoize": "^1.1.1"
+  },
   "peerDependencies": {
     "prop-types": ">=15.6",
     "react": ">=16.8",

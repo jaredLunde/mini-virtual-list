@@ -978,6 +978,16 @@
     exec-sh "^0.3.2"
     minimist "^1.2.0"
 
+"@essentials/memoize-one@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@essentials/memoize-one/-/memoize-one-1.0.2.tgz#a8e9c5e203f985a0b64ab3fee278370a8aa14bf8"
+  integrity sha512-FhL++iIRtTCYZPBQ3rUzlH1ngmrgYhkCgeNqhl6X6/Aj0P8Rf4Ppko3E9tgLpBdBGZfwqhGmJHpKkSSE69UglA==
+
+"@essentials/one-key-map@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@essentials/one-key-map/-/one-key-map-1.0.1.tgz#a8ac7059a9f15cba5a32c4d7e2a7546d186553a8"
+  integrity sha512-cOhq1OosW3AlZnJF7Q1FSWsFQy9d2iZOpuv5THm2QyZHjfdQhRS9Nyr3+IiDQL7h/fONY9E87pkSjQ8gplEppA==
+
 "@istanbuljs/load-nyc-config@^1.0.0":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@istanbuljs/load-nyc-config/-/load-nyc-config-1.0.0.tgz#10602de5570baea82f8afbfa2630b24e7a8cfe5b"
@@ -1173,6 +1183,11 @@
     babel-plugin-dev-expression latest
     babel-plugin-macros latest
 
+"@react-hook/passive-layout-effect@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@react-hook/passive-layout-effect/-/passive-layout-effect-1.0.3.tgz#55faac3bce2ad2b4a12eb0c6a52903da32fdc006"
+  integrity sha512-VFUvBBSYWRigI/YhMRp28tncMWYVgzsUdmdIdZyJ3CpKgj5sLmm4RmJdIoKIfWO/WRX5XQ+83GW2E6VmqTHZ3g==
+
 "@samverschueren/stream-to-observable@^0.3.0":
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/@samverschueren/stream-to-observable/-/stream-to-observable-0.3.0.tgz#ecdf48d532c58ea477acfcab80348424f8d0662f"
@@ -1305,6 +1320,11 @@
   version "7.0.4"
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.4.tgz#38fd73ddfd9b55abb1e1b2ed578cb55bd7b7d339"
   integrity sha512-8+KAKzEvSUdeo+kmqnKrqgeE+LcA0tjYWFY7RPProVYwnqDjukzO+3b6dLD56rYX5TdWejnEOLJYOIeh4CXKuA==
+
+"@types/node@^13.11.0":
+  version "13.11.0"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-13.11.0.tgz#390ea202539c61c8fa6ba4428b57e05bc36dc47b"
+  integrity sha512-uM4mnmsIIPK/yeO+42F2RQhGUIs39K2RFmugcJANppXe6J1nvH87PvzPZYpza7Xhhs8Yn9yIAVdLZ84z61+0xQ==
 
 "@types/parse-json@^4.0.0":
   version "4.0.0"
@@ -5554,6 +5574,11 @@ tr46@^1.0.1:
   integrity sha1-qLE/1r/SSJUZZ0zN5VujaTtwbQk=
   dependencies:
     punycode "^2.1.0"
+
+trie-memoize@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/trie-memoize/-/trie-memoize-1.1.1.tgz#64159da8d52804be1eadb245e3d6e5d90a49e6b8"
+  integrity sha512-PrGb8Mywv+i+jIQ/D6LKP7AZq0rGV6Ceh5OpUirYFOQ4arRnU7niqcx9M283yQyPa2+58IH2FHKIwbDtb7Q4Bg==
 
 ts-jest@latest:
   version "25.3.1"
