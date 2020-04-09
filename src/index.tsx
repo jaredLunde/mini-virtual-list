@@ -132,10 +132,12 @@ const useForceUpdate = (): (() => void) => {
   return () => setState((current) => ++current)
 }
 
-const elementsCache = {}
 const getRefSetter = trieMemoize(
   [OneKeyMap, OneKeyMap],
-  (itemPositioner: ItemPositioner) =>
+  (
+    elementsCache: Record<number, HTMLElement>,
+    itemPositioner: ItemPositioner
+  ) =>
     trieMemoize(
       [OneKeyMap, {}],
       (itemHeight: number, index: number) => (el: HTMLElement | null): void => {
@@ -189,6 +191,7 @@ export const List: React.FC<ListProps> = React.forwardRef(
     const [itemPositioner, setItemPositioner] = useState<ItemPositioner>(
       initPositioner
     )
+    const {current: elementsCache} = useRef({})
     const measure = useCallback(
       trieMemoize([{}], (index) => () => {
         const originalItem = itemPositioner.get(index)
@@ -200,7 +203,7 @@ export const List: React.FC<ListProps> = React.forwardRef(
         }
       }),
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [itemHeight, itemPositioner]
+      [elementsCache, itemHeight, itemPositioner]
     )
 
     // Calls the onRender callback if the rendered indices changed
@@ -239,7 +242,7 @@ export const List: React.FC<ListProps> = React.forwardRef(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [itemHeight, itemHeightEstimate, width])
 
-    const setItemRef = getRefSetter(itemPositioner)
+    const setItemRef = getRefSetter(elementsCache, itemPositioner)
     const itemCount = items.length
     const measuredCount = itemPositioner.size()
     const itemHeightOrEstimate = itemHeight || itemHeightEstimate
