@@ -160,7 +160,7 @@ const useForceUpdate = (): (() => void) => {
   return () => setState((current) => ++current)
 }
 
-const elementsCache = new Map()
+const elementsCache = {}
 const getRefSetter = trieMemoize(
   [OneKeyMap, OneKeyMap],
   (positionCache: PositionCache, itemPositioner: ItemPositioner) =>
@@ -168,7 +168,7 @@ const getRefSetter = trieMemoize(
       [OneKeyMap, {}],
       (itemHeight: number, index: number) => (el: HTMLElement | null): void => {
         if (el === null) return
-        elementsCache.set(index, el)
+        elementsCache[index] = el
         if (itemPositioner.get(index) === void 0) {
           const item = itemPositioner.set(index, itemHeight || el.offsetHeight)
           positionCache.setPosition(index, item.top, item.height)
@@ -224,7 +224,7 @@ export const List: React.FC<ListProps> = React.forwardRef(
     const measure = useCallback(
       trieMemoize([{}], (index) => () => {
         const originalItem = itemPositioner.get(index)
-        const nextHeight = itemHeight || elementsCache.get(index).offsetHeight
+        const nextHeight = itemHeight || elementsCache[index].offsetHeight
         // Only update if meaningful update occurred
         if (originalItem.height !== nextHeight) {
           const item = itemPositioner.update(index, nextHeight)
