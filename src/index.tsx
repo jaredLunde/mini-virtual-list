@@ -26,7 +26,7 @@ const binarySearchGE = (a: number[], value: number, lo = 0) => {
 
 const createItemPositioner = (rowGutter = 0): ItemPositioner => {
   let listHeight = 0
-  let numItems = 0
+  const tops: number[] = []
   const items: Record<number, {top: number; height: number}> = {}
 
   return {
@@ -34,8 +34,7 @@ const createItemPositioner = (rowGutter = 0): ItemPositioner => {
       const top = listHeight
       listHeight += height + rowGutter
       items[index] = {top, height}
-      numItems++
-      return items[index]
+      tops[index] = top
     },
     get: (index: number | undefined): any =>
       index === void 0 ? index : items[index],
@@ -50,69 +49,38 @@ const createItemPositioner = (rowGutter = 0): ItemPositioner => {
       const difference = listHeight - originalListHeight
       index++
 
-      for (; index < numItems; index++) {
+      for (; index < tops.length; index++) {
         const item = items[index]
         item.top = item.top + difference
+        tops[index] = item.top
       }
-
-      return updatedItem
     },
+    estimateTotalHeight: (itemCount, defaultItemHeight) =>
+      itemCount === tops.length
+        ? listHeight
+        : listHeight + Math.ceil(itemCount - tops.length) * defaultItemHeight,
+    range: (lo, hi) => {
+      const startIndex = binarySearchGE(tops, lo)
+      return [startIndex, binarySearchGE(tops, hi, startIndex + 1)]
+    },
+    listHeight: () => listHeight,
+    size: () => tops.length,
   }
 }
 
 interface ItemPositioner {
-  set: (index: number, height: number) => ItemPositionerItem
+  set: (index: number, height: number) => void
   get: (index: number | undefined) => ItemPositionerItem
-  update: (index: number, height: number) => ItemPositionerItem
+  update: (index: number, height: number) => void
+  estimateTotalHeight: (itemCount: number, defaultItemHeight: number) => number
+  range: (lo: number, hi: number) => [number, number]
+  listHeight: () => number
+  size: () => number
 }
 
 interface ItemPositionerItem {
   top: number
   height: number
-}
-
-const createPositionCache = (): PositionCache => {
-  const tops: number[] = []
-  let listHeight = 0
-
-  const estimateTotalHeight = (
-    itemCount: number,
-    defaultItemHeight: number
-  ): number =>
-    itemCount === tops.length
-      ? listHeight
-      : listHeight + Math.ceil(itemCount - tops.length) * defaultItemHeight
-
-  const setPosition = (index: number, top: number, height: number): void => {
-    const current = tops[index]
-    if (current) {
-      listHeight -= (tops[index + 1] || listHeight) - current
-      listHeight += height
-    }
-    tops[index] = top
-  }
-
-  return {
-    // Gets the list items in the defined window range
-    // O(log(n)) lookup ;)
-    range: (lo, hi) => {
-      const startIndex = binarySearchGE(tops, lo)
-      return [startIndex, binarySearchGE(tops, hi, startIndex + 1)]
-    },
-    size: () => tops.length,
-    listHeight: () => listHeight,
-    estimateTotalHeight,
-    setPosition,
-  }
-}
-
-// Position cache requirements:
-interface PositionCache {
-  range: (lo: number, hi: number) => [number, number]
-  size: () => number
-  listHeight: () => number
-  estimateTotalHeight: (itemCount: number, defaultItemHeight: number) => number
-  setPosition: (index: number, top: number, height: number) => void
 }
 
 const getContainerStyle = memoizeOne(
@@ -167,15 +135,14 @@ const useForceUpdate = (): (() => void) => {
 const elementsCache = {}
 const getRefSetter = trieMemoize(
   [OneKeyMap, OneKeyMap],
-  (positionCache: PositionCache, itemPositioner: ItemPositioner) =>
+  (itemPositioner: ItemPositioner) =>
     trieMemoize(
       [OneKeyMap, {}],
       (itemHeight: number, index: number) => (el: HTMLElement | null): void => {
         if (el === null) return
         elementsCache[index] = el
         if (itemPositioner.get(index) === void 0) {
-          const item = itemPositioner.set(index, itemHeight || el.offsetHeight)
-          positionCache.setPosition(index, item.top, item.height)
+          itemPositioner.set(index, itemHeight || el.offsetHeight)
         }
       }
     )
@@ -222,22 +189,18 @@ export const List: React.FC<ListProps> = React.forwardRef(
     const [itemPositioner, setItemPositioner] = useState<ItemPositioner>(
       initPositioner
     )
-    const [positionCache, setPositionCache] = useState<PositionCache>(
-      createPositionCache
-    )
     const measure = useCallback(
       trieMemoize([{}], (index) => () => {
         const originalItem = itemPositioner.get(index)
         const nextHeight = itemHeight || elementsCache[index].offsetHeight
         // Only update if meaningful update occurred
         if (originalItem.height !== nextHeight) {
-          const item = itemPositioner.update(index, nextHeight)
-          positionCache.setPosition(index, item.top, item.height)
+          itemPositioner.update(index, nextHeight)
           forceUpdate()
         }
       }),
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [itemHeight, positionCache, itemPositioner]
+      [itemHeight, itemPositioner]
     )
 
     // Calls the onRender callback if the rendered indices changed
@@ -255,11 +218,9 @@ export const List: React.FC<ListProps> = React.forwardRef(
       // None of the stuff below is relevant if the item height is fixed and unchanged
       if (prevItemHeight.current === itemHeight) return
       prevItemHeight.current = itemHeight
-      const cacheSize = positionCache.size()
-      const nextPositionCache = createPositionCache()
+      const cacheSize = itemPositioner.size()
       const nextItemPositioner = initPositioner()
       const stateUpdates = (): void => {
-        setPositionCache(nextPositionCache)
         setItemPositioner(nextItemPositioner)
       }
 
@@ -271,20 +232,18 @@ export const List: React.FC<ListProps> = React.forwardRef(
 
       for (let index = 0; index < cacheSize; index++) {
         const pos = itemPositioner.get(index)
-
         if (pos !== void 0) {
-          const item = nextItemPositioner.set(index, pos.height)
-          nextPositionCache.setPosition(index, item.top, pos.height)
+          nextItemPositioner.set(index, pos.height)
         }
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [itemHeight, itemHeightEstimate, width])
 
-    const setItemRef = getRefSetter(positionCache, itemPositioner)
+    const setItemRef = getRefSetter(itemPositioner)
     const itemCount = items.length
-    const measuredCount = positionCache.size()
+    const measuredCount = itemPositioner.size()
     const itemHeightOrEstimate = itemHeight || itemHeightEstimate
-    const estimatedTotalHeight = positionCache.estimateTotalHeight(
+    const estimatedTotalHeight = itemPositioner.estimateTotalHeight(
       itemCount,
       itemHeightOrEstimate
     )
@@ -301,7 +260,7 @@ export const List: React.FC<ListProps> = React.forwardRef(
     stopIndex.current = void 0
 
     // eslint-disable-next-line prefer-const
-    let [index, stop] = positionCache.range(
+    let [index, stop] = itemPositioner.range(
       Math.max(0, scrollTop - overscanBy),
       scrollTop + overscanBy
     )
@@ -338,7 +297,7 @@ export const List: React.FC<ListProps> = React.forwardRef(
       )
     }
 
-    const listHeight = positionCache.listHeight()
+    const listHeight = itemPositioner.listHeight()
 
     if (listHeight <= scrollTop + overscanBy && measuredCount < itemCount) {
       const batchSize = Math.min(
