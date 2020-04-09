@@ -189,6 +189,8 @@ export const List: React.FC<ListProps> = React.forwardRef(
     const measure = useCallback(
       trieMemoize([{}], (index) => () => {
         const originalItem = itemPositioner.get(index)
+        // We can bail out because this will be measured eventually anyway
+        if (!originalItem) return
         const nextHeight = itemHeight || elementsCache[index].offsetHeight
         // Only update if meaningful update occurred
         if (originalItem.height !== nextHeight) {
@@ -210,7 +212,7 @@ export const List: React.FC<ListProps> = React.forwardRef(
 
     // Updates the item positions any time a prop potentially affecting their
     // size changes
-    useLayoutEffect(() => {
+    useEffect(() => {
       didMount.current = '1'
       // None of the stuff below is relevant if the item height is fixed and unchanged
       if (prevItemHeight.current === itemHeight) return
