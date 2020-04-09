@@ -137,10 +137,9 @@ const assignUserItemStyle = trieMemoize(
 const defaultGetItemKey = (_: any[], i: number): number => i
 
 const getCachedItemStyle = trieMemoize(
-  [{}, {}],
-  (height: number, top: number): React.CSSProperties => ({
+  [{}],
+  (top: number): React.CSSProperties => ({
     top,
-    height,
     left: 0,
     width: '100%',
     writingMode: 'horizontal-tb',
@@ -312,9 +311,9 @@ export const List: React.FC<ListProps> = React.forwardRef(
         stopIndex.current = Math.max(stopIndex.current, index)
       }
 
-      const {top, height} = itemPositioner.get(index)
+      const {top} = itemPositioner.get(index)
       const data = items[index]
-      const cachedItemStyle = getCachedItemStyle(height, top)
+      const cachedItemStyle = getCachedItemStyle(top)
 
       children.push(
         React.createElement(
@@ -347,10 +346,7 @@ export const List: React.FC<ListProps> = React.forwardRef(
 
       for (; index < measuredCount + batchSize; index++) {
         const data = items[index]
-        const cachedItemStyle = getCachedItemStyle(
-          itemHeightOrEstimate,
-          listHeight
-        )
+        const cachedItemStyle = getCachedItemStyle(listHeight)
 
         children.push(
           React.createElement(
