@@ -1,9 +1,7 @@
 /* jest */
-// import React from 'react'
+import React from 'react'
+import {render} from '@testing-library/react'
 // import {renderHook} from '@testing-library/react-hooks'
-// import {render} from '@testing-library/react'
-const hello = world => `hello ${world}`
+import {List} from './index'
 
-test('passes', () => {
-  expect(hello('world')).toMatchSnapshot()
-})
+describe('<List>', () => {})

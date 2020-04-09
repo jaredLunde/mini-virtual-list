@@ -12,9 +12,7 @@ import memoizeOne from '@essentials/memoize-one'
 import useLayoutEffect from '@react-hook/passive-layout-effect'
 
 const emptyArr = []
-
-const binarySearchGE = (a: number[], value: number) => {
-  let lo = 0
+const binarySearchGE = (a: number[], value: number, lo = 0) => {
   let hi = a.length - 1
   let i = hi + 1
 
@@ -46,6 +44,7 @@ const createItemPositioner = (rowGutter = 0): ItemPositioner => {
       columnHeight += height + rowGutter
       items[index] = {top, height}
       numItems++
+      console.log('Setting item pos', items[index])
       return items[index]
     },
     get: (index: number | undefined): any =>
@@ -104,8 +103,9 @@ const createPositionCache = (): PositionCache => {
     hi: number,
     renderCallback: (index: number, top: number) => void
   ): void => {
+    console.log('Getting range', lo, hi)
     const startIndex = binarySearchGE(tops, lo)
-    const stopIndex = binarySearchGE(tops, hi)
+    const stopIndex = binarySearchGE(tops, hi, startIndex + 1)
     for (let index = startIndex; index < stopIndex; index++)
       renderCallback(index, tops[index])
   }
@@ -120,6 +120,9 @@ const createPositionCache = (): PositionCache => {
     get size(): number {
       return tops.length
     },
+    get listHeight(): number {
+      return listHeight
+    },
     estimateTotalHeight,
     setPosition,
   }
@@ -133,6 +136,7 @@ interface PositionCache {
     renderCallback: (index: number, top: number) => void
   ) => void
   size: number
+  listHeight: number
   estimateTotalHeight: (itemCount: number, defaultItemHeight: number) => number
   setPosition: (index: number, top: number, height: number) => void
 }
@@ -163,7 +167,7 @@ const assignUserItemStyle = trieMemoize(
 const defaultGetItemKey = (_: any[], i: number): number => i
 
 const getCachedItemStyle = trieMemoize(
-  [OneKeyMap, {}],
+  [{}, {}],
   (height: number, top: number): React.CSSProperties => ({
     top,
     height,
@@ -194,15 +198,18 @@ const elementsCache: WeakMap<Element, number> = new WeakMap()
 const getRefSetter = trieMemoize(
   [OneKeyMap, OneKeyMap],
   (positionCache: PositionCache, itemPositioner: ItemPositioner) =>
-    trieMemoize([{}], (index) => (el: HTMLElement | null): void => {
-      if (el === null) return
-      elementsCache.set(el, index)
+    trieMemoize(
+      [{}, {}],
+      (index: number, itemHeight = 0) => (el: HTMLElement | null): void => {
+        if (el === null) return
+        elementsCache.set(el, index)
 
-      if (itemPositioner.get(index) === void 0) {
-        const item = itemPositioner.set(index, el.offsetHeight)
-        positionCache.setPosition(index, item.top, item.height)
+        if (itemPositioner.get(index) === void 0) {
+          const item = itemPositioner.set(index, itemHeight || el.offsetHeight)
+          positionCache.setPosition(index, item.top, item.height)
+        }
       }
-    })
+    )
 )
 
 export const List: React.FC<ListProps> = React.forwardRef(
@@ -272,7 +279,7 @@ export const List: React.FC<ListProps> = React.forwardRef(
     useLayoutEffect(() => {
       didMount.current = '1'
       // Bail out if the item heights are fixed
-      if (itemHeight) return
+      // if (itemHeight) return
       const cacheSize = positionCache.size
       const nextPositionCache = createPositionCache()
       const nextItemPositioner = initPositioner()
@@ -295,26 +302,21 @@ export const List: React.FC<ListProps> = React.forwardRef(
           nextPositionCache.setPosition(index, item.top, pos.height)
         }
       }
-    }, [
-      itemHeight,
-      width,
-      rowGutter,
-      itemPositioner,
-      positionCache.size,
-      initPositioner,
-    ])
+      // eslint-disable-next-line
+    }, [itemHeight, width])
 
     const setItemRef = getRefSetter(positionCache, itemPositioner)
     const itemCount = items.length
     const measuredCount = positionCache.size
-    const estimatedTotalHeight = itemHeight
-      ? itemHeight * itemCount
-      : positionCache.estimateTotalHeight(itemCount, itemHeightEstimate)
+    const estimatedTotalHeight = positionCache.estimateTotalHeight(
+      itemCount,
+      itemHeight || itemHeightEstimate
+    )
     const children: React.ReactElement[] = []
     const itemRole = `${role}item`
     overscanBy = height * overscanBy
     stopIndex.current = void 0
-
+    console.log('PositionCache', positionCache)
     positionCache.range(
       Math.max(0, scrollTop - overscanBy),
       scrollTop + overscanBy,
@@ -339,7 +341,7 @@ export const List: React.FC<ListProps> = React.forwardRef(
             itemAs,
             {
               key,
-              ref: setItemRef(index),
+              ref: setItemRef(index, itemHeight),
               role: itemRole,
               style:
                 typeof itemStyle === 'object' && itemStyle !== null
@@ -353,30 +355,30 @@ export const List: React.FC<ListProps> = React.forwardRef(
     )
 
     if (
-      estimatedTotalHeight < scrollTop + overscanBy &&
+      positionCache.listHeight <= scrollTop + overscanBy &&
       measuredCount < itemCount
     ) {
       const batchSize = Math.min(
         itemCount - measuredCount,
         Math.ceil(
-          (scrollTop + overscanBy - estimatedTotalHeight) / itemHeightEstimate
+          (scrollTop + overscanBy - positionCache.listHeight) /
+            (itemHeight || itemHeightEstimate)
         )
       )
 
       let index = measuredCount
 
       for (; index < measuredCount + batchSize; index++) {
-        const data = items[index],
-          key = itemKey(data, index),
-          cachedItem = itemPositioner.get(index),
-          cachedItemStyle = getCachedItemStyle(
-            itemHeight || cachedItem.height,
-            cachedItem.top
-          )
+        const data = items[index]
+        const key = itemKey(data, index)
+        const cachedItemStyle = getCachedItemStyle(
+          itemHeight || itemHeightEstimate,
+          positionCache.listHeight
+        )
 
         const getItemProps = (style: React.CSSProperties) => ({
           key,
-          ref: setItemRef(index),
+          ref: setItemRef(index, itemHeight),
           role: itemRole,
           style:
             typeof itemStyle === 'object' && itemStyle !== null
@@ -441,7 +443,12 @@ export interface ListProps {
     stopIndex: number | undefined,
     items: any[]
   ) => void
-  readonly render: any
+  readonly render: React.FC<{
+    [prop: string]: any
+    index: number
+    data: any
+    width: number
+  }>
 }
 
 const defaultRect = {
@@ -452,7 +459,7 @@ const defaultRect = {
 }
 
 export const useRect = <T extends HTMLElement = HTMLElement>(
-  deps = []
+  deps: any[] = []
 ): [LikeDOMRect, React.MutableRefObject<T | null>] => {
   const [rect, setRect] = useState<LikeDOMRect>(defaultRect)
   const ref = useRef<T>(null)
