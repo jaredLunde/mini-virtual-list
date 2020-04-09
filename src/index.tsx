@@ -387,7 +387,7 @@ const defaultRect = {width: 0, height: 0, x: 0, y: 0}
 export const useSize = <T extends HTMLElement = HTMLElement>(
   ref: React.MutableRefObject<T | null>,
   deps: any[] = []
-): [number, number] => {
+): {width: number; height: number} => {
   const [rect, setRect] = useState<LikeDOMRect>(defaultRect)
 
   useLayoutEffect(() => {
@@ -406,7 +406,7 @@ export const useSize = <T extends HTMLElement = HTMLElement>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps.concat(ref.current))
 
-  return [rect.width, rect.height]
+  return {width: rect.width, height: rect.height}
 }
 
 interface LikeDOMRect {
@@ -418,7 +418,7 @@ interface LikeDOMRect {
 
 export const useScroller = <T extends HTMLElement = HTMLElement>(
   ref: React.MutableRefObject<T | null>
-): [number, boolean] => {
+): {scrollTop: number; isScrolling: boolean} => {
   const [isScrolling, setIsScrolling] = useState(false)
   const [scrollTop, setScrollTop] = useState(0)
 
@@ -442,7 +442,7 @@ export const useScroller = <T extends HTMLElement = HTMLElement>(
     return () => window.clearTimeout(to)
   }, [scrollTop])
 
-  return [scrollTop, isScrolling]
+  return {scrollTop, isScrolling}
 }
 
 if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {

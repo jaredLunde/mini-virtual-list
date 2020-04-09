@@ -35,7 +35,13 @@ export interface ListProps {
 export declare const useSize: <T extends HTMLElement = HTMLElement>(
   ref: React.MutableRefObject<T | null>,
   deps?: any[]
-) => [number, number]
+) => {
+  width: number
+  height: number
+}
 export declare const useScroller: <T extends HTMLElement = HTMLElement>(
   ref: React.MutableRefObject<T | null>
-) => [number, boolean]
+) => {
+  scrollTop: number
+  isScrolling: boolean
+}
