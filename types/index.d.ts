@@ -1,15 +1,11 @@
 import React from 'react'
 export declare const List: React.FC<ListProps>
 export interface ListProps {
-  readonly columnWidth?: number
   readonly rowGutter?: number
   readonly width: number
   readonly height: number
   readonly scrollTop: number
   readonly isScrolling?: boolean
-  readonly containerRef?:
-    | ((element: HTMLElement) => void)
-    | React.MutableRefObject<HTMLElement | null>
   readonly as?: any
   readonly id?: string
   readonly className?: string
@@ -29,10 +25,11 @@ export interface ListProps {
     items: any[]
   ) => void
   readonly render: React.FC<{
-    [prop: string]: any
     index: number
     data: any
     width: number
+    measure: () => void
+    [prop: string]: any
   }>
 }
 export declare const useSize: <T extends HTMLElement = HTMLElement>(
