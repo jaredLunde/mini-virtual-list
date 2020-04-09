@@ -84,7 +84,11 @@ const createPositionCache = (): PositionCache => {
       : listHeight + Math.ceil(itemCount - tops.length) * defaultItemHeight
 
   const setPosition = (index: number, top: number, height: number): void => {
-    if (tops[index] === void 0) listHeight += height
+    const current = tops[index]
+    if (current) {
+      listHeight -= (tops[index + 1] || listHeight) - current
+      listHeight += height
+    }
     tops[index] = top
   }
 
