@@ -44,7 +44,6 @@ const createItemPositioner = (rowGutter = 0): ItemPositioner => {
       columnHeight += height + rowGutter
       items[index] = {top, height}
       numItems++
-      console.log('Setting item pos', items[index])
       return items[index]
     },
     get: (index: number | undefined): any =>
@@ -103,7 +102,6 @@ const createPositionCache = (): PositionCache => {
     hi: number,
     renderCallback: (index: number, top: number) => void
   ): void => {
-    console.log('Getting range', lo, hi)
     const startIndex = binarySearchGE(tops, lo)
     const stopIndex = binarySearchGE(tops, hi, startIndex + 1)
     for (let index = startIndex; index < stopIndex; index++)
@@ -278,8 +276,6 @@ export const List: React.FC<ListProps> = React.forwardRef(
     // size changes
     useLayoutEffect(() => {
       didMount.current = '1'
-      // Bail out if the item heights are fixed
-      // if (itemHeight) return
       const cacheSize = positionCache.size
       const nextPositionCache = createPositionCache()
       const nextItemPositioner = initPositioner()
@@ -302,7 +298,7 @@ export const List: React.FC<ListProps> = React.forwardRef(
           nextPositionCache.setPosition(index, item.top, pos.height)
         }
       }
-      // eslint-disable-next-line
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [itemHeight, width])
 
     const setItemRef = getRefSetter(positionCache, itemPositioner)
@@ -316,7 +312,7 @@ export const List: React.FC<ListProps> = React.forwardRef(
     const itemRole = `${role}item`
     overscanBy = height * overscanBy
     stopIndex.current = void 0
-    console.log('PositionCache', positionCache)
+
     positionCache.range(
       Math.max(0, scrollTop - overscanBy),
       scrollTop + overscanBy,
@@ -451,18 +447,13 @@ export interface ListProps {
   }>
 }
 
-const defaultRect = {
-  height: 0,
-  width: 0,
-  x: 0,
-  y: 0,
-}
+const defaultRect = {width: 0, height: 0, x: 0, y: 0}
 
-export const useRect = <T extends HTMLElement = HTMLElement>(
+export const useSize = <T extends HTMLElement = HTMLElement>(
+  ref: React.MutableRefObject<T | null>,
   deps: any[] = []
-): [LikeDOMRect, React.MutableRefObject<T | null>] => {
+): [number, number] => {
   const [rect, setRect] = useState<LikeDOMRect>(defaultRect)
-  const ref = useRef<T>(null)
 
   useLayoutEffect(() => {
     const {current} = ref
@@ -477,9 +468,9 @@ export const useRect = <T extends HTMLElement = HTMLElement>(
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps)
+  }, deps.concat(ref.current))
 
-  return [rect, ref]
+  return [rect.width, rect.height]
 }
 
 interface LikeDOMRect {
@@ -489,12 +480,11 @@ interface LikeDOMRect {
   readonly y: number
 }
 
-export const useScrollTop = <T extends HTMLElement = HTMLElement>(): [
-  number,
-  React.MutableRefObject<T | null>
-] => {
+export const useScroller = <T extends HTMLElement = HTMLElement>(
+  ref: React.MutableRefObject<T | null>
+): [number, boolean] => {
+  const [isScrolling, setIsScrolling] = useState(false)
   const [scrollTop, setScrollTop] = useState(0)
-  const ref = useRef<T>(null)
 
   useLayoutEffect(() => {
     const {current} = ref
@@ -503,9 +493,20 @@ export const useScrollTop = <T extends HTMLElement = HTMLElement>(): [
       current.addEventListener('scroll', handleScroll)
       return () => current.removeEventListener('scroll', handleScroll)
     }
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ref.current])
 
-  return [scrollTop, ref]
+  useLayoutEffect(() => {
+    setIsScrolling(true)
+    const to = window.setTimeout(() => {
+      // This is here to prevent premature bail outs while maintaining high resolution
+      // unsets. Without it there will always bee a lot of unnecessary DOM writes to style.
+      setIsScrolling(false)
+    }, 1000 / 6)
+    return () => window.clearTimeout(to)
+  }, [scrollTop])
+
+  return [scrollTop, isScrolling]
 }
 
 if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
