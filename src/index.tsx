@@ -156,9 +156,9 @@ const ListItem: React.FC<ListItemProps> = (props) => {
     props.as,
     {role: props.role, style: props.style, ref},
     React.createElement(props.render, {
-      index: props.childProps.index,
-      data: props.childProps.data,
-      width: props.childProps.width,
+      index: props.index,
+      data: props.data,
+      width: props.width,
       measure: useCallback(() => {
         setTally((curr) => curr + 1)
       }, []),
@@ -171,10 +171,11 @@ interface ListItemProps {
   role: string
   style: React.CSSProperties
   index: number
+  data: any
+  width: number
   itemPositioner: ItemPositioner
   measured: () => void
   render: RenderComponent
-  childProps: ListItemChildProps
 }
 
 interface ListItemChildProps {
@@ -248,18 +249,19 @@ export const List: React.FC<ListProps> = React.forwardRef(
     const getItemProps = (
       index: number,
       data: any,
-      style: React.CSSProperties,
-      childProps: ListItemChildProps
+      width,
+      style: React.CSSProperties
     ) => ({
       as: itemAs,
       key: itemKey(data, index),
       role: itemRole,
       index,
+      data,
+      width,
       measured: forceUpdate,
       itemPositioner,
       style: itemStyle !== void 0 ? Object.assign({}, style, itemStyle) : style,
       render,
-      childProps,
     })
     overscanBy = height * overscanBy
     stopIndex.current = void 0
@@ -289,14 +291,10 @@ export const List: React.FC<ListProps> = React.forwardRef(
           getItemProps(
             index,
             data,
+            width,
             itemStyle !== void 0
               ? Object.assign({}, cachedItemStyle, itemStyle)
-              : cachedItemStyle,
-            {
-              index,
-              data,
-              width,
-            }
+              : cachedItemStyle
           )
         )
       )
@@ -323,12 +321,8 @@ export const List: React.FC<ListProps> = React.forwardRef(
             getItemProps(
               index,
               data,
-              itemHeight ? cachedItemStyle : prerenderItemStyle,
-              {
-                index,
-                data,
-                width,
-              }
+              width,
+              itemHeight ? cachedItemStyle : prerenderItemStyle
             )
           )
         )
