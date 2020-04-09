@@ -100,12 +100,6 @@ const assignUserStyle = memoizeOne(
   (args, pargs) => args[0] === pargs[0] && args[1] === pargs[1]
 )
 
-const assignUserItemStyle = trieMemoize(
-  [WeakMap, OneKeyMap],
-  (itemStyle: React.CSSProperties, userStyle: React.CSSProperties) =>
-    Object.assign({}, itemStyle, userStyle)
-)
-
 const defaultGetItemKey = (_: any[], i: number): number => i
 
 const getCachedItemStyle = trieMemoize(
@@ -256,8 +250,7 @@ export const List: React.FC<ListProps> = React.forwardRef(
       key,
       ref: setItemRef(itemHeight || 0, index),
       role: itemRole,
-      style:
-        itemStyle !== void 0 ? assignUserItemStyle(style, itemStyle) : style,
+      style: itemStyle !== void 0 ? Object.assign({}, style, itemStyle) : style,
     })
     overscanBy = height * overscanBy
     stopIndex.current = void 0
@@ -287,7 +280,7 @@ export const List: React.FC<ListProps> = React.forwardRef(
           getItemProps(
             itemKey(data, index),
             itemStyle !== void 0
-              ? assignUserItemStyle(cachedItemStyle, itemStyle)
+              ? Object.assign({}, cachedItemStyle, itemStyle)
               : cachedItemStyle
           ),
           React.createElement(render, {
