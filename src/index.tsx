@@ -1,5 +1,4 @@
 import React, {useCallback, useEffect, useState, useRef} from 'react'
-import {unstable_batchedUpdates} from 'react-dom'
 import trieMemoize from 'trie-memoize'
 import OneKeyMap from '@essentials/one-key-map'
 import memoizeOne from '@essentials/memoize-one'
@@ -103,9 +102,10 @@ const assignUserStyle = memoizeOne(
 const defaultGetItemKey = (_: any[], i: number): number => i
 
 const getCachedItemStyle = trieMemoize(
-  [{}],
-  (top: number): React.CSSProperties => ({
+  [OneKeyMap, {}],
+  (height: number | undefined, top: number): React.CSSProperties => ({
     top,
+    height,
     left: 0,
     width: '100%',
     writingMode: 'horizontal-tb',
@@ -126,23 +126,62 @@ const useForceUpdate = (): (() => void) => {
   return () => setState((current) => ++current)
 }
 
-const getRefSetter = trieMemoize(
-  [OneKeyMap, OneKeyMap],
-  (
-    elementsCache: Record<number, HTMLElement>,
-    itemPositioner: ItemPositioner
-  ) =>
-    trieMemoize(
-      [OneKeyMap, {}],
-      (itemHeight: number, index: number) => (el: HTMLElement | null): void => {
-        if (el === null) return
-        elementsCache[index] = el
-        if (itemPositioner.get(index) === void 0) {
-          itemPositioner.set(index, itemHeight || el.offsetHeight)
-        }
+const ListItem: React.FC<ListItemProps> = (props) => {
+  const ref = useRef<HTMLElement | null>(null)
+  const [tally, setTally] = useState(0)
+  const deps = [props.index, props.itemPositioner, tally]
+
+  useLayoutEffect(() => {
+    if (ref.current) {
+      if (props.itemPositioner.get(props.index) === void 0) {
+        props.itemPositioner.set(props.index, ref.current.offsetHeight)
       }
-    )
-)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps)
+
+  useLayoutEffect(() => {
+    if (ref.current && tally > 0) {
+      props.itemPositioner.update(props.index, ref.current.offsetHeight)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps.concat(tally))
+
+  useEffect(() => {
+    if (tally > 0) props.measured()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tally])
+
+  return React.createElement(
+    props.as,
+    {role: props.role, style: props.style, ref},
+    React.createElement(props.render, {
+      index: props.childProps.index,
+      data: props.childProps.data,
+      width: props.childProps.width,
+      measure: useCallback(() => {
+        setTally((curr) => curr + 1)
+      }, []),
+    })
+  )
+}
+
+interface ListItemProps {
+  as: ListProps['itemAs']
+  role: string
+  style: React.CSSProperties
+  index: number
+  itemPositioner: ItemPositioner
+  measured: () => void
+  render: RenderComponent
+  childProps: ListItemChildProps
+}
+
+interface ListItemChildProps {
+  index: number
+  data: any
+  width: number
+}
 
 export const List: React.FC<ListProps> = React.forwardRef(
   (
@@ -175,33 +214,15 @@ export const List: React.FC<ListProps> = React.forwardRef(
   ) => {
     const didMount = useRef<string>('0')
     const forceUpdate = useForceUpdate()
-    const initPositioner = useCallback(
-      (): ItemPositioner => createItemPositioner(rowGutter || 0),
-      [rowGutter]
-    )
     const stopIndex = useRef<number | undefined>()
     const startIndex = useRef<number>(0)
-    const prevItemHeight = useRef<number | undefined>(itemHeight)
     const [itemPositioner, setItemPositioner] = useState<ItemPositioner>(
-      initPositioner
+      (): ItemPositioner => createItemPositioner(rowGutter || 0)
     )
-    const {current: elementsCache} = useRef({})
-    const measure = useCallback(
-      trieMemoize([{}], (index) => () => {
-        const originalItem = itemPositioner.get(index)
-        // We can bail out because this will be measured eventually anyway
-        if (!originalItem) return
-        const nextHeight = itemHeight || elementsCache[index].offsetHeight
-        // Only update if meaningful update occurred
-        if (originalItem.height !== nextHeight) {
-          itemPositioner.update(index, nextHeight)
-          forceUpdate()
-        }
-      }),
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [elementsCache, itemHeight, itemPositioner]
-    )
-
+    // Sets a new item positioner if the row gutter changes
+    useEffect(() => {
+      setItemPositioner(createItemPositioner(rowGutter || 0))
+    }, [rowGutter])
     // Calls the onRender callback if the rendered indices changed
     useEffect(() => {
       if (typeof onRender === 'function' && stopIndex.current !== void 0) {
@@ -210,35 +231,11 @@ export const List: React.FC<ListProps> = React.forwardRef(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [onRender, items, startIndex.current, stopIndex.current])
 
-    // Updates the item positions any time a prop potentially affecting their
-    // size changes
+    // Invalidates the container key if coming for SSR
     useEffect(() => {
       didMount.current = '1'
-      // None of the stuff below is relevant if the item height is fixed and unchanged
-      if (prevItemHeight.current === itemHeight) return
-      prevItemHeight.current = itemHeight
-      const cacheSize = itemPositioner.size()
-      const nextItemPositioner = initPositioner()
-      const stateUpdates = (): void => {
-        setItemPositioner(nextItemPositioner)
-      }
-
-      if (typeof unstable_batchedUpdates === 'function') {
-        unstable_batchedUpdates(stateUpdates)
-      } else {
-        stateUpdates()
-      }
-
-      for (let index = 0; index < cacheSize; index++) {
-        const pos = itemPositioner.get(index)
-        if (pos !== void 0) {
-          nextItemPositioner.set(index, pos.height)
-        }
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [itemHeight, itemHeightEstimate, width])
-
-    const setItemRef = getRefSetter(elementsCache, itemPositioner)
+    }, [])
+    // const setItemRef = getRefSetter(elementsCache, itemPositioner)
     const itemCount = items.length
     const measuredCount = itemPositioner.size()
     const itemHeightOrEstimate = itemHeight || itemHeightEstimate
@@ -248,11 +245,21 @@ export const List: React.FC<ListProps> = React.forwardRef(
     )
     const children: React.ReactElement[] = []
     const itemRole = `${role}item`
-    const getItemProps = (key: any, style: React.CSSProperties) => ({
-      key,
-      ref: setItemRef(itemHeight || 0, index),
+    const getItemProps = (
+      index: number,
+      data: any,
+      style: React.CSSProperties,
+      childProps: ListItemChildProps
+    ) => ({
+      as: itemAs,
+      key: itemKey(data, index),
       role: itemRole,
+      index,
+      measured: forceUpdate,
+      itemPositioner,
       style: itemStyle !== void 0 ? Object.assign({}, style, itemStyle) : style,
+      render,
+      childProps,
     })
     overscanBy = height * overscanBy
     stopIndex.current = void 0
@@ -274,28 +281,28 @@ export const List: React.FC<ListProps> = React.forwardRef(
 
       const {top} = itemPositioner.get(index)
       const data = items[index]
-      const cachedItemStyle = getCachedItemStyle(top)
+      const cachedItemStyle = getCachedItemStyle(itemHeight, top)
 
       children.push(
         React.createElement(
-          itemAs,
+          ListItem,
           getItemProps(
-            itemKey(data, index),
-            itemStyle !== void 0
-              ? Object.assign({}, cachedItemStyle, itemStyle)
-              : cachedItemStyle
-          ),
-          React.createElement(render, {
             index,
             data,
-            width,
-            measure: measure(index),
-          })
+            itemStyle !== void 0
+              ? Object.assign({}, cachedItemStyle, itemStyle)
+              : cachedItemStyle,
+            {
+              index,
+              data,
+              width,
+            }
+          )
         )
       )
     }
 
-    const listHeight = itemPositioner.listHeight()
+    let listHeight = itemPositioner.listHeight()
 
     if (listHeight <= scrollTop + overscanBy && measuredCount < itemCount) {
       const batchSize = Math.min(
@@ -307,21 +314,22 @@ export const List: React.FC<ListProps> = React.forwardRef(
 
       for (; index < measuredCount + batchSize; index++) {
         const data = items[index]
-        const cachedItemStyle = getCachedItemStyle(listHeight)
+        if (itemHeight) listHeight += itemHeight
+        const cachedItemStyle = getCachedItemStyle(itemHeight, listHeight)
 
         children.push(
           React.createElement(
-            itemAs,
+            ListItem,
             getItemProps(
-              itemKey(data, index),
-              itemHeight ? cachedItemStyle : prerenderItemStyle
-            ),
-            React.createElement(render, {
               index,
               data,
-              width,
-              measure: measure(index),
-            })
+              itemHeight ? cachedItemStyle : prerenderItemStyle,
+              {
+                index,
+                data,
+                width,
+              }
+            )
           )
         )
       }
@@ -368,14 +376,15 @@ export interface ListProps {
     stopIndex: number | undefined,
     items: any[]
   ) => void
-  readonly render: React.FC<{
-    index: number
-    data: any
-    width: number
+  readonly render: RenderComponent
+}
+
+export type RenderComponent = React.FC<
+  ListItemChildProps & {
     measure: () => void
     [prop: string]: any
-  }>
-}
+  }
+>
 
 const defaultRect = {width: 0, height: 0, x: 0, y: 0}
 

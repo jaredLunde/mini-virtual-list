@@ -1,4 +1,9 @@
 import React from 'react'
+interface ListItemChildProps {
+  index: number
+  data: any
+  width: number
+}
 export declare const List: React.FC<ListProps>
 export interface ListProps {
   readonly rowGutter?: number
@@ -24,14 +29,14 @@ export interface ListProps {
     stopIndex: number | undefined,
     items: any[]
   ) => void
-  readonly render: React.FC<{
-    index: number
-    data: any
-    width: number
+  readonly render: RenderComponent
+}
+export declare type RenderComponent = React.FC<
+  ListItemChildProps & {
     measure: () => void
     [prop: string]: any
-  }>
-}
+  }
+>
 export declare const useSize: <T extends HTMLElement = HTMLElement>(
   ref: React.MutableRefObject<T | null>,
   deps?: any[]
@@ -45,3 +50,4 @@ export declare const useScroller: <T extends HTMLElement = HTMLElement>(
   scrollTop: number
   isScrolling: boolean
 }
+export {}
