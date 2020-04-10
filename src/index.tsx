@@ -31,13 +31,12 @@ const createItemPositioner = (rowGutter = 0): ItemPositioner => {
   const items: {top: number; height: number}[] = []
 
   return {
-    set: (index, height = 0) => {
+    set: (index, height) => {
       const top = listHeight
       listHeight += height + rowGutter
       items[index] = {top, height}
     },
-    get: (index: number | undefined): any =>
-      index === void 0 ? index : items[index],
+    get: (index) => items[index],
     // This only updates the items in the list that exist beyond the index
     // whose dimesions changed
     update: (index, height) => {
@@ -62,7 +61,7 @@ const createItemPositioner = (rowGutter = 0): ItemPositioner => {
 
 interface ItemPositioner {
   set: (index: number, height: number) => void
-  get: (index: number | undefined) => ItemPositionerItem
+  get: (index: number) => ItemPositionerItem
   update: (index: number, height: number) => void
   estimateTotalHeight: (itemCount: number, defaultItemHeight: number) => number
   range: (lo: number, hi: number) => [number, number]
@@ -114,7 +113,6 @@ const getCachedItemStyle = memoize(
 
 const prerenderItemStyle: React.CSSProperties = {
   width: '100%',
-  zIndex: -1000,
   visibility: 'hidden',
   position: 'absolute',
   writingMode: 'horizontal-tb',

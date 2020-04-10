@@ -29,21 +29,132 @@
 <pre align="center">npm i mini-virtual-list</pre>
 <hr>
 
-A tiny, dynamic list virtualization library for React
+A tiny, speedy list virtualization library for React
+
+## Features
+
+- [x] **Easy to use** This component comes with the important batteries included and an easy to understand API.
+- [x] **Versatile** Supports list items with both variable and fixed heights.
+  - [Variable size example on **CodeSandbox**](https://codesandbox.io/s/mini-virtual-list-example-r7fxt?file=/src/App.js)
+  - [Fixed size example on **CodeSandbox**](https://codesandbox.io/s/mini-virtual-list-fixed-example-q96ty?file=/src/App.js)
+- [x] **Blazing™ fast** This component can seamless render tens of thousands of items without issue because it uses binary search (`O(log n)` worst case) to determine which elements in are visible in the window at a given time.
+- [x] **TypeScript** Woohoo, superior autocomplete and type safety means fewer bugs in your implementation.
 
 ## Quick Start
 
 ```jsx harmony
-import _ from 'mini-virtual-list'
+import React, {useState, useLayoutEffect, useRef} from 'react'
+import randInt from 'random-int'
+import {List, useScroller, useSize} from 'mini-virtual-list'
+
+let items = []
+for (let i = 10000 * cur; i < cur * 10000 + 10000; i++) items.push({id: i})
+
+const ListComponent = () => {
+  const ref = useRef(null)
+  const scroll = useScroller(ref)
+  const size = useSize(ref)
+
+  return (
+    <div
+      style={{
+        border: '1px solid #999',
+        width: '100%',
+        height: 400,
+        overflow: 'auto',
+      }}
+      ref={ref}
+    >
+      <List
+        items={items}
+        itemHeightEstimate={162 / 2}
+        {...size}
+        {...scroll}
+        render={Card}
+      />
+    </div>
+  )
+}
+
+const Card = React.forwardRef(({index, measure, style, data: {id}}, ref) => {
+  const [height, setHeight] = useState(getHeight(index))
+
+  useLayoutEffect(() => {
+    measure()
+  }, [measure, height])
+
+  return (
+    <div
+      style={{
+        ...style,
+        borderBottom: '1px solid #999',
+        padding: '8px',
+        height,
+      }}
+      ref={ref}
+    >
+      Hello {id}
+      <button
+        onClick={() => {
+          setHeight(randInt(40, 140))
+        }}
+        style={{marginLeft: '0.5rem'}}
+      >
+        Change height
+      </button>
+    </div>
+  )
+})
 ```
 
 ## API
 
-### Props
+### Components
+
+| Component         | Description                              |
+| ----------------- | ---------------------------------------- |
+| [`<List>`](#list) | A tiny, fast virtualized list component. |
+
+### Hooks
+
+| Hook                            | Description                                                                                                                                                                                                                                     |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`useSize()`](#usesize)         | A convenient hook for providing the container size to the `<List>` component                                                                                                                                                                    |
+| [`useScroller()`](#usescroller) | A hook used for tracking a container node's scroll position. These values are used when calculating the number of rows to render and determining when we should disable pointer events on the masonry container to maximize scroll performance. |
+
+---
+
+### <List>
+
+#### Props
 
 | Prop | Type | Default | Required? | Description |
 | ---- | ---- | ------- | --------- | ----------- |
 |      |      |         |           |             |
+
+---
+
+### useSize()
+
+#### Arguments
+
+| Argument | Type | Default | Required? | Description |
+| -------- | ---- | ------- | --------- | ----------- |
+|          |      |         |           |             |
+
+#### Returns
+
+---
+
+### useScroller()
+
+#### Arguments
+
+| Argument | Type | Default | Required? | Description |
+| -------- | ---- | ------- | --------- | ----------- |
+|          |      |         |           |             |
+
+#### Returns
 
 ## LICENSE
 
