@@ -132,7 +132,7 @@ const Card = React.forwardRef(
 
 ---
 
-### <List>
+### &lt;List&gt;
 
 #### Props
 
