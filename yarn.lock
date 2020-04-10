@@ -978,10 +978,10 @@
     exec-sh "^0.3.2"
     minimist "^1.2.0"
 
-"@essentials/one-key-map@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@essentials/one-key-map/-/one-key-map-1.0.1.tgz#a8ac7059a9f15cba5a32c4d7e2a7546d186553a8"
-  integrity sha512-cOhq1OosW3AlZnJF7Q1FSWsFQy9d2iZOpuv5THm2QyZHjfdQhRS9Nyr3+IiDQL7h/fONY9E87pkSjQ8gplEppA==
+"@essentials/one-key-map@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@essentials/one-key-map/-/one-key-map-1.0.2.tgz#be7a84e6ad3a5c6c968703cca105da9c22e31694"
+  integrity sha512-O2OjgyvJOS0BptC5kr92kwlMo2w4nrGtIFBYr5nisNN2x9xef9EiGj/tGWGjBpEX92W9CuNRwsG9ua4TYjEbAA==
 
 "@istanbuljs/load-nyc-config@^1.0.0":
   version "1.0.0"
@@ -5570,10 +5570,10 @@ tr46@^1.0.1:
   dependencies:
     punycode "^2.1.0"
 
-trie-memoize@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/trie-memoize/-/trie-memoize-1.1.1.tgz#64159da8d52804be1eadb245e3d6e5d90a49e6b8"
-  integrity sha512-PrGb8Mywv+i+jIQ/D6LKP7AZq0rGV6Ceh5OpUirYFOQ4arRnU7niqcx9M283yQyPa2+58IH2FHKIwbDtb7Q4Bg==
+trie-memoize@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/trie-memoize/-/trie-memoize-1.1.2.tgz#94ad8ff5b288819b62fd6f29eade2c84af435721"
+  integrity sha512-I9tAnQCriR/qd9ab4h+fUBOAa9qy2FlDOvKbPsbsj4n9+GdszyHVOSg/slUQFhAp80G7y+ze1sln37x7E/7GHA==
 
 ts-jest@latest:
   version "25.3.1"

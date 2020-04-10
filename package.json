@@ -1,6 +1,6 @@
 {
   "name": "mini-virtual-list",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "homepage": "https://github.com/jaredLunde/mini-virtual-list#readme",
   "repository": "github:jaredLunde/mini-virtual-list",
   "bugs": "https://github.com/jaredLunde/mini-virtual-list/issues",
@@ -85,9 +85,9 @@
     "typescript": "latest"
   },
   "dependencies": {
-    "@essentials/one-key-map": "^1.0.1",
+    "@essentials/one-key-map": "^1.0.2",
     "@react-hook/passive-layout-effect": "^1.0.3",
-    "trie-memoize": "^1.1.1"
+    "trie-memoize": "^1.1.2"
   },
   "peerDependencies": {
     "prop-types": ">=15.6",
