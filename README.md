@@ -48,7 +48,8 @@ import randInt from 'random-int'
 import {List, useScroller, useSize} from 'mini-virtual-list'
 
 let items = []
-for (let i = 10000 * cur; i < cur * 10000 + 10000; i++) items.push({id: i})
+for (let i = 10000 * cur; i < cur * 10000 + 10000; i++)
+  items.push({id: i, initialHeight: randInt(40, 140)})
 
 const ListComponent = () => {
   const ref = useRef(null)
@@ -76,35 +77,42 @@ const ListComponent = () => {
   )
 }
 
-const Card = React.forwardRef(({index, measure, style, data: {id}}, ref) => {
-  const [height, setHeight] = useState(getHeight(index))
+// Variable height lists require your component to forward a ref to the container.
+// Fixed height lists do not.
+const Card = React.forwardRef(
+  ({index, measure, style, data: {id, initialHeight}}, ref) => {
+    const [height, setHeight] = useState(initialHeight)
 
-  useLayoutEffect(() => {
-    measure()
-  }, [measure, height])
+    useLayoutEffect(() => {
+      // Remeasures the cell any time the `height` state changes
+      // But this could be anything causing this effect. An image load,
+      // a disclosure opening, etc.
+      measure()
+    }, [measure, height])
 
-  return (
-    <div
-      style={{
-        ...style,
-        borderBottom: '1px solid #999',
-        padding: '8px',
-        height,
-      }}
-      ref={ref}
-    >
-      Hello {id}
-      <button
-        onClick={() => {
-          setHeight(randInt(40, 140))
+    return (
+      <div
+        style={{
+          ...style,
+          borderBottom: '1px solid #999',
+          padding: '8px',
+          height,
         }}
-        style={{marginLeft: '0.5rem'}}
+        ref={ref}
       >
-        Change height
-      </button>
-    </div>
-  )
-})
+        Hello {id}
+        <button
+          onClick={() => {
+            setHeight(randInt(40, 140))
+          }}
+          style={{marginLeft: '0.5rem'}}
+        >
+          Change height
+        </button>
+      </div>
+    )
+  }
+)
 ```
 
 ## API
