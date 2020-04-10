@@ -1,69 +1,62 @@
 import React, {useCallback, useEffect, useState, useRef} from 'react'
-import trieMemoize from 'trie-memoize'
+import memoize from 'trie-memoize'
 import OneKeyMap from '@essentials/one-key-map'
-import memoizeOne from '@essentials/memoize-one'
 import useLayoutEffect from '@react-hook/passive-layout-effect'
 
-const binarySearchGE = (a: number[], value: number, lo = 0) => {
+const binarySearchGE = (
+  a: {top: number; height: number}[],
+  value: number,
+  lo = 0
+) => {
   let hi = a.length - 1
-  let i = hi + 1
+  let index = hi + 1
 
   while (lo <= hi) {
-    const m = (lo + hi) >>> 1
-    const x = a[m]
+    const mid = (lo + hi) >>> 1
+    const top = a[mid].top
 
-    if (x >= value) {
-      i = m
-      hi = m - 1
+    if (top >= value) {
+      index = mid
+      hi = mid - 1
     } else {
-      lo = m + 1
+      lo = mid + 1
     }
   }
 
-  return i
+  return index
 }
 
 const createItemPositioner = (rowGutter = 0): ItemPositioner => {
   let listHeight = 0
-  const tops: number[] = []
-  const items: Record<number, {top: number; height: number}> = {}
+  const items: {top: number; height: number}[] = []
 
   return {
     set: (index, height = 0) => {
       const top = listHeight
       listHeight += height + rowGutter
       items[index] = {top, height}
-      tops[index] = top
     },
     get: (index: number | undefined): any =>
       index === void 0 ? index : items[index],
     // This only updates the items in the list that exist beyond the index
     // whose dimesions changed
     update: (index, height) => {
-      const updatedItem = items[index]
+      const updatedItem = items[index++]
       const originalListHeight = listHeight
       listHeight -= updatedItem.height - rowGutter
       updatedItem.height = height
       listHeight += updatedItem.height + rowGutter
       const difference = listHeight - originalListHeight
-      index++
-
-      for (; index < tops.length; index++) {
-        const item = items[index]
-        item.top = item.top + difference
-        tops[index] = item.top
-      }
+      for (; index < items.length; index++) items[index].top += difference
     },
     estimateTotalHeight: (itemCount, defaultItemHeight) =>
-      itemCount === tops.length
-        ? listHeight
-        : listHeight + Math.ceil(itemCount - tops.length) * defaultItemHeight,
+      listHeight + (itemCount - items.length) * defaultItemHeight,
     range: (lo, hi) => {
-      const startIndex = binarySearchGE(tops, lo)
-      return [startIndex, binarySearchGE(tops, hi, startIndex + 1)]
+      const startIndex = binarySearchGE(items, lo)
+      return [startIndex, binarySearchGE(items, hi, startIndex + 1)]
     },
     listHeight: () => listHeight,
-    size: () => tops.length,
+    size: () => items.length,
   }
 }
 
@@ -82,35 +75,41 @@ interface ItemPositionerItem {
   height: number
 }
 
-const getContainerStyle = memoizeOne(
-  (isScrolling: boolean | undefined, estimatedTotalHeight: number) => ({
+const getContainerStyle = memoize(
+  [OneKeyMap, OneKeyMap, OneKeyMap],
+  (
+    itemHeight: number | undefined,
+    estimatedTotalHeight: number,
+    isScrolling: boolean | undefined
+  ) => ({
     position: 'relative',
     width: '100%',
-    maxWidth: '100%',
     height: Math.ceil(estimatedTotalHeight),
-    maxHeight: Math.ceil(estimatedTotalHeight),
-    willChange: isScrolling ? 'contents, height' : void 0,
+    willChange:
+      isScrolling && !itemHeight
+        ? 'contents, height'
+        : isScrolling
+        ? 'contents'
+        : void 0,
     pointerEvents: isScrolling ? 'none' : void 0,
   })
 )
 
-const assignUserStyle = memoizeOne(
-  (containerStyle, userStyle) => Object.assign({}, containerStyle, userStyle),
-  (args, pargs) => args[0] === pargs[0] && args[1] === pargs[1]
-)
+const defaultGetItemKey = (_: any, i: number): number => i
 
-const defaultGetItemKey = (_: any[], i: number): number => i
-
-const getCachedItemStyle = trieMemoize(
+const getCachedItemStyle = memoize(
   [OneKeyMap, {}],
-  (height: number | undefined, top: number): React.CSSProperties => ({
-    top,
-    height,
-    left: 0,
-    width: '100%',
-    writingMode: 'horizontal-tb',
-    position: 'absolute',
-  })
+  (height: number | undefined, top: number): React.CSSProperties => {
+    const style: React.CSSProperties = {
+      top,
+      left: 0,
+      width: '100%',
+      writingMode: 'horizontal-tb',
+      position: 'absolute',
+    }
+    if (height) style.height = height
+    return style
+  }
 )
 
 const prerenderItemStyle: React.CSSProperties = {
@@ -128,87 +127,73 @@ const useForceUpdate = (): (() => void) => {
 
 const ListItem: React.FC<ListItemProps> = (props) => {
   const ref = useRef<HTMLElement | null>(null)
-  const [tally, setTally] = useState(0)
-  const deps = [props.index, props.itemPositioner, tally]
+  const deps = [props.index, props.itemPositioner, props.itemHeight]
 
   useLayoutEffect(() => {
     if (ref.current) {
       if (props.itemPositioner.get(props.index) === void 0) {
-        props.itemPositioner.set(props.index, ref.current.offsetHeight)
+        props.itemPositioner.set(
+          props.index,
+          props.itemHeight || ref.current.offsetHeight
+        )
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
 
-  useLayoutEffect(() => {
-    if (ref.current && tally > 0) {
+  const measure = useCallback(() => {
+    if (ref.current && !props.itemHeight) {
       props.itemPositioner.update(props.index, ref.current.offsetHeight)
+      props.measured()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps.concat(tally))
+  }, deps)
 
-  useEffect(() => {
-    if (tally > 0) props.measured()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tally])
-
-  return React.createElement(
-    props.as,
-    {role: props.role, style: props.style, ref},
-    React.createElement(props.render, {
-      index: props.index,
-      data: props.data,
-      width: props.width,
-      measure: useCallback(() => {
-        setTally((curr) => curr + 1)
-      }, []),
-    })
-  )
+  return React.createElement(props.render, {
+    ref,
+    index: props.index,
+    data: props.data,
+    width: props.width,
+    style: props.style,
+    measure,
+  })
 }
 
-interface ListItemProps {
-  as: ListProps['itemAs']
-  role: string
-  style: React.CSSProperties
-  index: number
-  data: any
-  width: number
-  itemPositioner: ItemPositioner
-  measured: () => void
-  render: RenderComponent
+interface ListItemProps<Data = any> {
+  readonly index: number
+  readonly data: Data
+  readonly width: number
+  readonly style: React.CSSProperties
+  readonly itemHeight?: number
+  readonly itemPositioner: ItemPositioner
+  readonly measured: () => void
+  readonly render: React.FC<ItemProps<Data>>
 }
 
-interface ListItemChildProps {
-  index: number
-  data: any
-  width: number
-}
-
-export const List: React.FC<ListProps> = React.forwardRef(
+export const List = React.forwardRef<HTMLElement, ListProps>(
   (
     {
-      items,
       width,
       height,
-      rowGutter,
-      onRender,
-
-      as = 'div',
-      id,
-      className,
-      style,
-      role = 'list',
-      tabIndex = 0,
-      itemAs = 'div',
-      itemStyle,
-      itemHeight,
-      itemHeightEstimate = 32,
-      itemKey = defaultGetItemKey,
+      rowGutter = 0,
       overscanBy = 2,
 
       scrollTop,
       isScrolling,
 
+      items,
+      itemHeight,
+      itemHeightEstimate = 32,
+      itemKey = defaultGetItemKey,
+
+      as = 'div',
+      id,
+      className,
+      style,
+      role,
+      tabIndex = 0,
+
+      onRender,
       render,
     },
     ref
@@ -218,12 +203,21 @@ export const List: React.FC<ListProps> = React.forwardRef(
     const stopIndex = useRef<number | undefined>()
     const startIndex = useRef<number>(0)
     const [itemPositioner, setItemPositioner] = useState<ItemPositioner>(
-      (): ItemPositioner => createItemPositioner(rowGutter || 0)
+      (): ItemPositioner => createItemPositioner(rowGutter)
     )
-    // Sets a new item positioner if the row gutter changes
+    // Creates a new item positioner if the row gutter changes
     useEffect(() => {
-      setItemPositioner(createItemPositioner(rowGutter || 0))
+      const nextPostitioner = createItemPositioner(rowGutter)
+      setItemPositioner(nextPostitioner)
+      const cacheSize = itemPositioner.size()
+
+      for (let index = 0; index < cacheSize; index++) {
+        const pos = itemPositioner.get(index)
+        nextPostitioner.set(index, pos.height)
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [rowGutter])
+
     // Calls the onRender callback if the rendered indices changed
     useEffect(() => {
       if (typeof onRender === 'function' && stopIndex.current !== void 0) {
@@ -236,7 +230,7 @@ export const List: React.FC<ListProps> = React.forwardRef(
     useEffect(() => {
       didMount.current = '1'
     }, [])
-    // const setItemRef = getRefSetter(elementsCache, itemPositioner)
+
     const itemCount = items.length
     const measuredCount = itemPositioner.size()
     const itemHeightOrEstimate = itemHeight || itemHeightEstimate
@@ -245,22 +239,19 @@ export const List: React.FC<ListProps> = React.forwardRef(
       itemHeightOrEstimate
     )
     const children: React.ReactElement[] = []
-    const itemRole = `${role}item`
     const getItemProps = (
       index: number,
       data: any,
-      width,
       style: React.CSSProperties
     ) => ({
-      as: itemAs,
       key: itemKey(data, index),
-      role: itemRole,
       index,
       data,
       width,
       measured: forceUpdate,
+      itemHeight,
       itemPositioner,
-      style: itemStyle !== void 0 ? Object.assign({}, style, itemStyle) : style,
+      style,
       render,
     })
     overscanBy = height * overscanBy
@@ -288,14 +279,7 @@ export const List: React.FC<ListProps> = React.forwardRef(
       children.push(
         React.createElement(
           ListItem,
-          getItemProps(
-            index,
-            data,
-            width,
-            itemStyle !== void 0
-              ? Object.assign({}, cachedItemStyle, itemStyle)
-              : cachedItemStyle
-          )
+          getItemProps(index, data, cachedItemStyle)
         )
       )
     }
@@ -316,12 +300,11 @@ export const List: React.FC<ListProps> = React.forwardRef(
         const cachedItemStyle = getCachedItemStyle(itemHeight, listHeight)
 
         children.push(
-          React.createElement(
+          React.createElement<ListItemProps<ListProps['items']>>(
             ListItem,
             getItemProps(
               index,
               data,
-              width,
               itemHeight ? cachedItemStyle : prerenderItemStyle
             )
           )
@@ -329,7 +312,12 @@ export const List: React.FC<ListProps> = React.forwardRef(
       }
     }
 
-    const containerStyle = getContainerStyle(isScrolling, estimatedTotalHeight)
+    const containerStyle = getContainerStyle(
+      itemHeight,
+      estimatedTotalHeight,
+      isScrolling
+    )
+
     return React.createElement(as, {
       ref,
       id,
@@ -339,61 +327,77 @@ export const List: React.FC<ListProps> = React.forwardRef(
       tabIndex,
       style:
         style !== void 0
-          ? assignUserStyle(containerStyle, style)
+          ? Object.assign({}, containerStyle, style)
           : containerStyle,
       children,
     })
   }
 )
 
-export interface ListProps {
-  readonly rowGutter?: number
+export interface ListProps<Item = any> {
   readonly width: number
   readonly height: number
+  readonly rowGutter?: number
+  readonly overscanBy?: number
+
   readonly scrollTop: number
   readonly isScrolling?: boolean
+
+  readonly items: Item[]
+  readonly itemHeight?: number
+  readonly itemHeightEstimate?: number
+  readonly itemKey?: (data: Item, index: number) => string | number
+
   readonly as?: any
   readonly id?: string
   readonly className?: string
   readonly style?: React.CSSProperties
   readonly role?: string
   readonly tabIndex?: number | string
-  readonly items: any[]
-  readonly itemAs?: any
-  readonly itemStyle?: React.CSSProperties
-  readonly itemHeight?: number
-  readonly itemHeightEstimate?: number
-  readonly itemKey?: (data: any, index: number) => string | number
-  readonly overscanBy?: number
+
   readonly onRender?: (
     startIndex: number,
     stopIndex: number | undefined,
     items: any[]
   ) => void
-  readonly render: RenderComponent
+  readonly render: React.FC<ItemProps<Item>>
 }
 
-export type RenderComponent = React.FC<
-  ListItemChildProps & {
-    measure: () => void
-    [prop: string]: any
-  }
->
+export interface ItemProps<Data = any> {
+  index: number
+  data: Data
+  style: React.CSSProperties
+  measure: () => void
+  [prop: string]: any
+}
 
-const defaultRect = {width: 0, height: 0, x: 0, y: 0}
+const defaultSize = {width: 0, height: 0}
 
 export const useSize = <T extends HTMLElement = HTMLElement>(
   ref: React.MutableRefObject<T | null>,
   deps: any[] = []
 ): {width: number; height: number} => {
-  const [rect, setRect] = useState<LikeDOMRect>(defaultRect)
+  const [size, setSize] = useState<{width: number; height: number}>(defaultSize)
 
   useLayoutEffect(() => {
     const {current} = ref
 
     if (current) {
-      setRect(current.getBoundingClientRect())
-      const handleResize = () => setRect(current.getBoundingClientRect())
+      const handleResize = () => {
+        const computedStyle = getComputedStyle(current)
+        const float = parseFloat
+        const width =
+          current.clientWidth -
+          float(computedStyle.paddingTop) -
+          float(computedStyle.paddingBottom)
+        const height =
+          current.clientHeight -
+          float(computedStyle.paddingLeft) -
+          float(computedStyle.paddingRight)
+        setSize({height, width})
+      }
+
+      handleResize()
       window.addEventListener('resize', handleResize)
       window.addEventListener('orientationchange', handleResize)
       return () => {
@@ -404,14 +408,7 @@ export const useSize = <T extends HTMLElement = HTMLElement>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps.concat(ref.current))
 
-  return {width: rect.width, height: rect.height}
-}
-
-interface LikeDOMRect {
-  readonly width: number
-  readonly height: number
-  readonly x: number
-  readonly y: number
+  return size
 }
 
 export const useScroller = <T extends HTMLElement = HTMLElement>(
@@ -422,10 +419,22 @@ export const useScroller = <T extends HTMLElement = HTMLElement>(
 
   useLayoutEffect(() => {
     const {current} = ref
+    let tick: number | undefined
+
     if (current) {
-      const handleScroll = () => setScrollTop(current.scrollTop)
+      const handleScroll = () => {
+        if (tick) return
+        tick = window.requestAnimationFrame(() => {
+          setScrollTop(current.scrollTop)
+          tick = void 0
+        })
+      }
+
       current.addEventListener('scroll', handleScroll)
-      return () => current.removeEventListener('scroll', handleScroll)
+      return () => {
+        current.removeEventListener('scroll', handleScroll)
+        if (tick) window.cancelAnimationFrame(tick)
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ref.current])

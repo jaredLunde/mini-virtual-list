@@ -978,11 +978,6 @@
     exec-sh "^0.3.2"
     minimist "^1.2.0"
 
-"@essentials/memoize-one@^1.0.2":
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/@essentials/memoize-one/-/memoize-one-1.0.2.tgz#a8e9c5e203f985a0b64ab3fee278370a8aa14bf8"
-  integrity sha512-FhL++iIRtTCYZPBQ3rUzlH1ngmrgYhkCgeNqhl6X6/Aj0P8Rf4Ppko3E9tgLpBdBGZfwqhGmJHpKkSSE69UglA==
-
 "@essentials/one-key-map@^1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@essentials/one-key-map/-/one-key-map-1.0.1.tgz#a8ac7059a9f15cba5a32c4d7e2a7546d186553a8"
