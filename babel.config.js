@@ -19,7 +19,10 @@ module.exports = (api) => {
   ]
 
   return {
-    presets: ['@babel/preset-react', presetEnv],
-    plugins: ['optimize-react', 'typescript-to-proptypes'],
+    presets: [
+      ['@babel/preset-react', {/*runtime: 'automatic',*/ useSpread: true}],
+      presetEnv,
+    ],
+    plugins: ['optimize-react', 'annotate-pure-calls'],
   }
 }
