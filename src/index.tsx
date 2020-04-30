@@ -1,7 +1,5 @@
 import React, {useEffect, useState, useRef} from 'react'
-import trieMemoize from 'trie-memoize'
 import memoizeOne from '@essentials/memoize-one'
-import OneKeyMap from '@essentials/one-key-map'
 import useLayoutEffect from '@react-hook/passive-layout-effect'
 import useThrottle, {useThrottleCallback} from '@react-hook/throttle'
 import {requestTimeout, clearRequestTimeout} from '@essentials/request-timeout'
@@ -56,6 +54,7 @@ export const useList = ({
       index={index}
       data={data}
       width={width}
+      height={itemHeight}
       measured={itemHeight ? noop : forceUpdate}
       positioner={positioner}
       style={style}
@@ -64,7 +63,10 @@ export const useList = ({
   )
 
   overscanBy = height * overscanBy
-  const r = range(Math.max(0, scrollTop - overscanBy), scrollTop + overscanBy)
+  const r = range(
+    Math.max(0, scrollTop - overscanBy / 2),
+    scrollTop + overscanBy
+  )
   let index = r[0]
 
   for (; index < r[1]; index++) {
@@ -77,12 +79,14 @@ export const useList = ({
     }
 
     const data = items[index]
+    const {top, height} = get(index)
+
     children.push(
       createListItem(
         index,
         data,
         width,
-        getCachedItemStyle(itemHeight, get(index).top)
+        getCachedItemStyle(itemHeight || height, top)
       )
     )
   }
@@ -118,7 +122,7 @@ export const useList = ({
   // If we needed a fresh batch we should reload our components with the measured
   // sizes
   useEffect(() => {
-    if (needsFreshBatch) forceUpdate_()
+    if (needsFreshBatch) forceUpdate()
     // eslint-disable-next-line
   }, [needsFreshBatch])
   // Calls the onRender callback if the rendered indices changed
@@ -185,25 +189,6 @@ export interface UseListOptions {
   readonly render: RenderComponent
 }
 
-// ~5.33x faster than createElement without the memo
-const createRenderElement = trieMemoize(
-  [OneKeyMap, {}, WeakMap, OneKeyMap, OneKeyMap],
-  (
-    RenderComponent: keyof JSX.IntrinsicElements | React.ComponentType<any>,
-    index: number,
-    data: any,
-    width: number,
-    measure: React.Dispatch<React.SetStateAction<number>>
-  ) => (
-    <RenderComponent
-      index={index}
-      data={data}
-      width={width}
-      measure={() => measure((curr) => ++curr)}
-    />
-  )
-)
-
 export type RenderComponent = React.FC<{
   index: number
   data: any
@@ -223,35 +208,48 @@ export interface ListProps extends Omit<UseListOptions, 'positioner'> {
 
 const ListItem: React.FC<
   ListItemProps & {as: keyof JSX.IntrinsicElements | React.ComponentType<any>}
-> = ({index, positioner, measured, as, role, style, render, data, width}) => {
+> = ({
+  render: RenderComponent,
+  as: WrapperComponent,
+  role,
+  style,
+  index,
+  positioner,
+  measured,
+  data,
+  width,
+  height,
+}) => {
   const ref = useRef<HTMLElement | null>(null)
-  const [tally, setTally] = useState(0)
-  const deps = [index, positioner, tally]
+  const [cursor, setCursor] = useState(emptyObj)
 
   useLayoutEffect(() => {
     const {current} = ref
-    if (current && positioner.get(index) === void 0)
-      positioner.set(index, current.offsetHeight)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps)
 
-  useLayoutEffect(() => {
-    const {current} = ref
-    if (current && tally > 0) {
-      positioner.update(index, current.offsetHeight)
+    if (current && cursor !== emptyObj) {
+      measured()
+      positioner.update(index, height || current.offsetHeight)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps)
+  }, [cursor, positioner, index])
 
-  useEffect(() => {
-    if (tally > 0) measured()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tally])
-
-  return React.createElement(
-    as,
-    {role, style, ref},
-    createRenderElement(render, index, data, width, setTally)
+  return (
+    <WrapperComponent
+      role={role}
+      style={style}
+      ref={(el: HTMLElement | null) => {
+        ref.current = el
+        if (el && positioner.get(index) === void 0)
+          positioner.set(index, height || el.offsetHeight)
+      }}
+    >
+      <RenderComponent
+        index={index}
+        data={data}
+        width={width}
+        measure={useRef(() => setCursor({})).current}
+      />
+    </WrapperComponent>
   )
 }
 
@@ -262,14 +260,15 @@ interface ListItemProps {
   index: number
   data: any
   width: number
+  height?: number
   positioner: Positioner
   measured: () => void
   render: RenderComponent
 }
 
 const useForceUpdate = (): (() => void) => {
-  const setState = useState<number>(0)[1]
-  return () => setState((current) => ++current)
+  const setState = useState({})[1]
+  return useRef(() => setState({})).current
 }
 
 export const usePositioner = (
@@ -277,7 +276,7 @@ export const usePositioner = (
   deps: React.DependencyList = []
 ) => {
   const didMount = useRef(0)
-  const initPositioner = () => createPositioner(rowGutter || 0)
+  const initPositioner = () => createPositioner(rowGutter)
   const [positioner, setPositioner] = useState(initPositioner)
 
   // Creates a new positioner if the dependencies change
@@ -286,10 +285,20 @@ export const usePositioner = (
     didMount.current = 1
     // eslint-disable-next-line
   }, deps)
-
   // Sets a new item positioner if the row gutter changes
-  useEffect(() => {
-    setPositioner(initPositioner())
+  useLayoutEffect(() => {
+    if (didMount.current) {
+      const cacheSize = positioner.size()
+      const nextPositioner = initPositioner()
+      let index = 0
+
+      for (; index < cacheSize; index++) {
+        const pos = positioner.get(index)
+        nextPositioner.set(index, pos !== void 0 ? pos.height : 0)
+      }
+
+      setPositioner(nextPositioner)
+    }
     // eslint-disable-next-line
   }, [rowGutter])
 
@@ -300,41 +309,41 @@ export const useSize = <T extends HTMLElement = HTMLElement>(
   ref: React.MutableRefObject<T | null>,
   deps: React.DependencyList = []
 ): {width: number; height: number} => {
-  const [size, setSize] = useState<{width: number; height: number}>(defaultSize)
-
-  useLayoutEffect(() => {
-    const {current} = ref
-
+  const {current} = ref
+  const getSize = () => {
     if (current) {
-      const handleResize = () => {
-        const computedStyle = getComputedStyle(current)
-        const float = parseFloat
-        const width =
+      const computedStyle = getComputedStyle(current)
+      const float = parseFloat
+      return {
+        width:
           current.clientWidth -
           float(computedStyle.paddingTop) -
-          float(computedStyle.paddingBottom)
-        const height =
+          float(computedStyle.paddingBottom),
+        height:
           current.clientHeight -
           float(computedStyle.paddingLeft) -
-          float(computedStyle.paddingRight)
-        setSize({height, width})
-      }
-
-      handleResize()
-      window.addEventListener('resize', handleResize)
-      window.addEventListener('orientationchange', handleResize)
-      return () => {
-        window.removeEventListener('resize', handleResize)
-        window.removeEventListener('orientationchange', handleResize)
+          float(computedStyle.paddingRight),
       }
     }
+
+    return {width: 0, height: 0}
+  }
+  const [size, setSize] = useState<{width: number; height: number}>(getSize)
+
+  useLayoutEffect(() => {
+    const handleResize = () => setSize(getSize())
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    window.addEventListener('orientationchange', handleResize)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      window.removeEventListener('orientationchange', handleResize)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps.concat(ref.current))
+  }, deps)
 
   return size
 }
-
-const defaultSize = {width: 0, height: 0, x: 0, y: 0}
 
 export const useScroller = <T extends HTMLElement = HTMLElement>(
   ref: React.MutableRefObject<T | null> | Window,
@@ -353,24 +362,26 @@ export const useScroller = <T extends HTMLElement = HTMLElement>(
 
   useLayoutEffect(() => {
     if (current) {
-      const handleScroll = () => setScrollTop(getScrollPos())
+      let to: ReturnType<typeof requestTimeout> | undefined
+      const handleScroll = () => {
+        setScrollTop(getScrollPos())
+        setIsScrolling(true)
+        to && clearRequestTimeout(to)
+        to = requestTimeout(() => {
+          // This is here to prevent premature bail outs while maintaining high resolution
+          // unsets. Without it there will always bee a lot of unnecessary DOM writes to style.
+          setIsScrolling(false)
+        }, 1000 / fps)
+      }
+
       current.addEventListener('scroll', handleScroll)
       return () => {
         current.removeEventListener('scroll', handleScroll)
+        to && clearRequestTimeout(to)
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current])
-
-  useEffect(() => {
-    setIsScrolling(true)
-    const to = requestTimeout(() => {
-      // This is here to prevent premature bail outs while maintaining high resolution
-      // unsets. Without it there will always bee a lot of unnecessary DOM writes to style.
-      setIsScrolling(false)
-    }, 40 + 1000 / fps)
-    return () => clearRequestTimeout(to)
-  }, [fps, scrollTop])
+  }, [current, fps])
 
   return {scrollTop: Math.max(0, scrollTop - offset), isScrolling}
 }
@@ -477,6 +488,7 @@ const prerenderItemStyle: React.CSSProperties = {
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {}
+const emptyObj = {}
 
 const binarySearchGE = (a: number[], value: number, lo = 0) => {
   let hi = a.length - 1

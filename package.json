@@ -1,6 +1,6 @@
 {
   "name": "mini-virtual-list",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "homepage": "https://github.com/jaredLunde/mini-virtual-list#readme",
   "repository": "github:jaredLunde/mini-virtual-list",
   "bugs": "https://github.com/jaredLunde/mini-virtual-list/issues",
@@ -22,9 +22,11 @@
   ],
   "main": "dist/main/index.js",
   "module": "dist/module/index.js",
+  "source": "src/index.tsx",
   "types": "types/index.d.ts",
   "files": [
     "/dist",
+    "/src",
     "/types"
   ],
   "sideEffects": false,
@@ -86,11 +88,9 @@
   },
   "dependencies": {
     "@essentials/memoize-one": "^1.0.2",
-    "@essentials/one-key-map": "^1.0.1",
     "@essentials/request-timeout": "^1.2.0",
     "@react-hook/passive-layout-effect": "^1.0.3",
-    "@react-hook/throttle": "^2.1.2",
-    "trie-memoize": "^1.1.4"
+    "@react-hook/throttle": "^2.1.2"
   },
   "peerDependencies": {
     "prop-types": ">=15.6",
