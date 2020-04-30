@@ -309,8 +309,8 @@ export const useSize = <T extends HTMLElement = HTMLElement>(
   ref: React.MutableRefObject<T | null>,
   deps: React.DependencyList = []
 ): {width: number; height: number} => {
-  const {current} = ref
   const getSize = () => {
+    const {current} = ref
     if (current) {
       const computedStyle = getComputedStyle(current)
       const float = parseFloat
