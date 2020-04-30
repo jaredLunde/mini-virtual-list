@@ -1,38 +1,72 @@
 import React from 'react'
-export declare const List: React.ForwardRefExoticComponent<
-  ListProps<any> & React.RefAttributes<HTMLElement>
->
-export interface ListProps<Item = any> {
+export declare const useList: ({
+  positioner,
+  containerRef,
+  items,
+  width,
+  height,
+  onRender,
+  as: Container,
+  id,
+  className,
+  style,
+  role,
+  tabIndex,
+  itemAs,
+  itemHeight,
+  itemHeightEstimate,
+  itemKey,
+  overscanBy,
+  scrollTop,
+  isScrolling,
+  render,
+}: UseListOptions) => JSX.Element
+export interface UseListOptions {
+  readonly positioner: Positioner
+  /**
+   * Forwards a React ref to the grid container.
+   */
+  readonly containerRef?:
+    | ((element: HTMLElement) => void)
+    | React.MutableRefObject<HTMLElement | null>
   readonly width: number
   readonly height: number
-  readonly rowGutter?: number
-  readonly overscanBy?: number
   readonly scrollTop: number
   readonly isScrolling?: boolean
-  readonly items: Item[]
-  readonly itemHeight?: number
-  readonly itemHeightEstimate?: number
-  readonly itemKey?: (data: Item, index: number) => string | number
-  readonly as?: any
+  readonly as?: keyof JSX.IntrinsicElements | React.ComponentType<any>
   readonly id?: string
   readonly className?: string
   readonly style?: React.CSSProperties
   readonly role?: string
   readonly tabIndex?: number | string
+  readonly items: any[]
+  readonly itemAs?: keyof JSX.IntrinsicElements | React.ComponentType<any>
+  readonly itemHeight?: number
+  readonly itemHeightEstimate?: number
+  readonly itemKey?: (data: any, index: number) => string | number
+  readonly overscanBy?: number
   readonly onRender?: (
     startIndex: number,
     stopIndex: number | undefined,
     items: any[]
   ) => void
-  readonly render: React.FC<ItemProps<Item>>
+  readonly render: RenderComponent
 }
-export interface ItemProps<Data = any> {
+export declare type RenderComponent = React.FC<{
   index: number
-  data: Data
-  style: React.CSSProperties
+  data: any
+  width: number
   measure: () => void
   [prop: string]: any
+}>
+export declare const List: React.FC<ListProps>
+export interface ListProps extends Omit<UseListOptions, 'positioner'> {
+  rowGutter?: number
 }
+export declare const usePositioner: (
+  rowGutter?: number,
+  deps?: React.DependencyList
+) => Positioner
 export declare const useSize: <T extends HTMLElement = HTMLElement>(
   ref: React.MutableRefObject<T | null>,
   deps?: React.DependencyList
@@ -48,3 +82,17 @@ export declare const useScroller: <T extends HTMLElement = HTMLElement>(
   scrollTop: number
   isScrolling: boolean
 }
+interface Positioner {
+  set: (index: number, height: number) => void
+  get: (index: number | undefined) => PositionerItem
+  update: (index: number, height: number) => void
+  estimateHeight: (itemCount: number, defaultItemHeight: number) => number
+  range: (lo: number, hi: number) => [number, number]
+  listHeight: () => number
+  size: () => number
+}
+interface PositionerItem {
+  top: number
+  height: number
+}
+export {}

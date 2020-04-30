@@ -1,10 +1,6 @@
 {
   "name": "mini-virtual-list",
-<<<<<<< HEAD
-  "version": "0.1.1",
-=======
-  "version": "0.1.0-alpha.7",
->>>>>>> Light refactor
+  "version": "0.1.2",
   "homepage": "https://github.com/jaredLunde/mini-virtual-list#readme",
   "repository": "github:jaredLunde/mini-virtual-list",
   "bugs": "https://github.com/jaredLunde/mini-virtual-list/issues",
