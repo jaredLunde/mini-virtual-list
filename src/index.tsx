@@ -222,6 +222,7 @@ const ListItem: React.FC<
 }) => {
   const ref = useRef<HTMLElement | null>(null)
   const [cursor, setCursor] = useState(emptyObj)
+  const measure = useRef(() => setCursor({})).current
 
   useLayoutEffect(() => {
     const {current} = ref
@@ -236,22 +237,19 @@ const ListItem: React.FC<
     <WrapperComponent
       role={role}
       style={style}
-      ref={
-        height
-          ? void 0
-          : (el: HTMLElement | null) => {
-              if (el && positioner.get(index) === void 0) {
-                ref.current = el.firstChild as HTMLElement
-                positioner.set(index, height || el.offsetHeight)
-              }
-            }
-      }
+      ref={(el: HTMLElement | null) => {
+        ref.current = el && (el.firstChild as HTMLElement)
+
+        if (el && positioner.get(index) === void 0) {
+          positioner.set(index, height || el.offsetHeight)
+        }
+      }}
     >
       <RenderComponent
         index={index}
         data={data}
         width={width}
-        measure={useRef(() => setCursor({})).current}
+        measure={height ? noop : measure}
       />
     </WrapperComponent>
   )
@@ -492,6 +490,8 @@ const prerenderItemStyle: React.CSSProperties = {
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const emptyObj = {}
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+const noop = () => {}
 
 const binarySearchGE = (a: number[], value: number, lo = 0) => {
   let hi = a.length - 1
