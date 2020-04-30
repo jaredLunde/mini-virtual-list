@@ -55,7 +55,7 @@ export const useList = ({
       data={data}
       width={width}
       height={itemHeight}
-      measured={itemHeight ? noop : forceUpdate}
+      measured={forceUpdate}
       positioner={positioner}
       style={style}
       render={render}
@@ -225,10 +225,9 @@ const ListItem: React.FC<
 
   useLayoutEffect(() => {
     const {current} = ref
-
     if (current && cursor !== emptyObj) {
-      measured()
       positioner.update(index, height || current.offsetHeight)
+      measured()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cursor, positioner, index])
@@ -237,11 +236,16 @@ const ListItem: React.FC<
     <WrapperComponent
       role={role}
       style={style}
-      ref={(el: HTMLElement | null) => {
-        ref.current = el
-        if (el && positioner.get(index) === void 0)
-          positioner.set(index, height || el.offsetHeight)
-      }}
+      ref={
+        height
+          ? void 0
+          : (el: HTMLElement | null) => {
+              if (el && positioner.get(index) === void 0) {
+                ref.current = el.firstChild as HTMLElement
+                positioner.set(index, height || el.offsetHeight)
+              }
+            }
+      }
     >
       <RenderComponent
         index={index}
@@ -267,7 +271,7 @@ interface ListItemProps {
 }
 
 const useForceUpdate = (): (() => void) => {
-  const setState = useState({})[1]
+  const setState = useState(emptyObj)[1]
   return useRef(() => setState({})).current
 }
 
@@ -487,7 +491,6 @@ const prerenderItemStyle: React.CSSProperties = {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
-const noop = () => {}
 const emptyObj = {}
 
 const binarySearchGE = (a: number[], value: number, lo = 0) => {
