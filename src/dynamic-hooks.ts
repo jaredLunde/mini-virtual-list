@@ -1,6 +1,5 @@
 import {useEffect, useState, useRef} from 'react'
 import useLayoutEffect from '@react-hook/passive-layout-effect'
-import {getCachedItemStyle} from './utils'
 import type {ListItemProps} from './types'
 
 export const useDynamicList = ({
@@ -14,8 +13,8 @@ export const useDynamicList = ({
 }: UseDynamicListOptions) => {
   const itemCount = items.length
   const measuredCount = positioner.size()
-  const childProps: ListItemProps[] = []
   overscanBy = height * overscanBy
+  const childProps: ListItemProps[] = []
 
   positioner.range(
     Math.max(0, scrollTop - overscanBy / 2),
@@ -26,7 +25,12 @@ export const useDynamicList = ({
         data: items[index],
         width,
         height,
-        style: getCachedItemStyle(height, top),
+        style: {
+          position: 'absolute',
+          width: '100%',
+          top,
+          left: 0,
+        },
       })
   )
 
@@ -67,7 +71,6 @@ export interface UseDynamicListOptions {
 
 const prerenderItemStyle: React.CSSProperties = {
   position: 'absolute',
-  writingMode: 'horizontal-tb',
   width: '100%',
   zIndex: -1000,
   visibility: 'hidden',

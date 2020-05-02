@@ -1,4 +1,3 @@
-/// <reference types="react" />
 export declare const getContainerStyle: (
   isScrolling: boolean | undefined,
   estimatedHeight: number
@@ -11,8 +10,4 @@ export declare const getContainerStyle: (
   willChange: string | undefined
   pointerEvents: string | undefined
 }
-export declare const getCachedItemStyle: (
-  height: number | undefined,
-  top: number
-) => import('react').CSSProperties
 export declare const defaultGetItemKey: (_: any[], i: number) => number

@@ -1,4 +1,3 @@
-import {getCachedItemStyle} from './utils'
 import type {ListItemProps} from './types'
 
 export const useList = ({
@@ -10,19 +9,16 @@ export const useList = ({
   itemHeight,
   itemGap = 0,
 }: UseListOptions) => {
-  const itemCount = items.length
   const totalItemHeight = itemHeight + itemGap
-  const childProps: ListItemProps[] = []
-
   overscanBy = height * overscanBy
-
   let index = Math.floor(
     Math.max(0, scrollTop - overscanBy / 2) / totalItemHeight
   )
   const stopIndex = Math.min(
-    itemCount,
+    items.length,
     Math.ceil((scrollTop + overscanBy) / totalItemHeight)
   )
+  const childProps: ListItemProps[] = []
 
   for (; index < stopIndex; index++) {
     childProps.push({
@@ -30,10 +26,12 @@ export const useList = ({
       data: items[index],
       width,
       height,
-      style: getCachedItemStyle(
-        itemHeight,
-        itemGap * index + index * itemHeight
-      ),
+      style: {
+        position: 'absolute',
+        width: '100%',
+        top: itemGap * index + index * itemHeight,
+        left: 0,
+      },
     })
   }
 
