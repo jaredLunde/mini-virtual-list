@@ -21,3 +21,10 @@ export interface ListPropsBase {
     items: any[]
   ) => void
 }
+export interface ListItemProps {
+  index: number
+  data: any
+  width: number
+  height: number
+  style: React.CSSProperties
+}

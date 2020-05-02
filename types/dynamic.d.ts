@@ -1,27 +1,29 @@
 import * as React from 'react'
 import type {ListPropsBase} from './types'
-export declare const useDynamicList: ({
-  positioner,
-  containerRef,
+import type {Positioner} from './dynamic-hooks'
+export declare const useDynamicListElements: ({
   items,
   width,
   height,
-  onRender,
+  overscanBy,
+  scrollTop,
+  itemHeightEstimate,
+  positioner,
+  containerRef,
   as: Container,
   id,
   className,
   style,
   role,
   tabIndex,
-  itemAs,
-  itemHeightEstimate,
+  itemAs: WrapperComponent,
   itemKey,
-  overscanBy,
-  scrollTop,
   isScrolling,
-  render,
-}: UseDynamicListOptions) => JSX.Element
-export interface UseDynamicListOptions extends Omit<ListPropsBase, 'itemGap'> {
+  onRender,
+  render: RenderComponent,
+}: UseDynamicListElementsOptions) => JSX.Element
+export interface UseDynamicListElementsOptions
+  extends Omit<ListPropsBase, 'itemGap'> {
   readonly positioner: Positioner
   readonly containerRef?:
     | ((element: HTMLElement) => void)
@@ -41,29 +43,7 @@ export interface DynamicListRenderProps {
   index: number
   data: any
   width: number
+  height: number | undefined
   measure: () => void
   [prop: string]: any
 }
-export declare const usePositioner: (
-  itemGap?: number,
-  deps?: React.DependencyList
-) => Positioner
-interface Positioner {
-  set: (index: number, height: number) => PositionerItem
-  get: (index: number | undefined) => PositionerItem
-  remove: (index: number) => void
-  update: (index: number, height: number) => void
-  est: (itemCount: number, defaultItemHeight: number) => number
-  range: (
-    lo: number,
-    hi: number,
-    cb: (item: PositionerItem, i: number) => void
-  ) => void
-  height: () => number
-  size: () => number
-}
-interface PositionerItem {
-  top: number
-  height: number
-}
-export {}

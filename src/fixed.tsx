@@ -1,7 +1,8 @@
 import * as React from 'react'
 import {useEffect} from 'react'
-import {getContainerStyle, getCachedItemStyle, defaultGetItemKey} from './utils'
-import type {ListPropsBase} from './types'
+import {useList} from './fixed-hooks'
+import {getContainerStyle, defaultGetItemKey} from './utils'
+import type {ListPropsBase, ListItemProps} from './types'
 
 export const List = React.forwardRef<any, ListProps>(
   (
@@ -9,8 +10,10 @@ export const List = React.forwardRef<any, ListProps>(
       items,
       width,
       height,
-      onRender,
-
+      overscanBy = 2,
+      scrollTop,
+      itemHeight,
+      itemGap = 0,
       as: Container = 'div',
       id,
       className,
@@ -18,73 +21,73 @@ export const List = React.forwardRef<any, ListProps>(
       role = 'list',
       tabIndex = 0,
       itemAs: WrapperComponent = 'div',
-      itemHeight,
       itemKey = defaultGetItemKey,
-      itemGap = 0,
-      overscanBy = 2,
-
-      scrollTop,
       isScrolling,
-
+      onRender,
       render: RenderComponent,
     },
     containerRef
   ) => {
-    const itemCount = items.length
-    const totalItemHeight = itemHeight + itemGap
-    const children: React.ReactElement[] = []
+    const children: (
+      | ListItemProps
+      | React.ReactElement<ListItemProps>
+    )[] = useList({
+      items,
+      width,
+      height,
+      overscanBy,
+      scrollTop,
+      itemHeight,
+      itemGap,
+    })
+    const itemRole = role + 'item'
+    const startIndex = children[0] ? (children[0] as ListItemProps).index : 0
+    let stopIndex: number | undefined
+    let i = 0
 
-    overscanBy = height * overscanBy
-    const startIndex = Math.floor(
-      Math.max(0, scrollTop - overscanBy / 2) / totalItemHeight
-    )
-    const stopIndex = Math.min(
-      itemCount,
-      Math.ceil((scrollTop + overscanBy) / totalItemHeight)
-    )
-
-    for (let index = startIndex; index < stopIndex; index++) {
-      const data = items[index]
-
-      children.push(
+    for (; i < children.length; i++) {
+      const child = children[i] as ListItemProps
+      stopIndex = child.index
+      children[i] = (
         <WrapperComponent
-          key={itemKey(data, index)}
-          role={`${role}item`}
-          style={getCachedItemStyle(
-            itemHeight,
-            itemGap * index + index * itemHeight
-          )}
+          key={itemKey(child.data, child.index)}
+          role={itemRole}
+          style={child.style}
         >
-          <RenderComponent index={index} data={data} width={width} />
+          <RenderComponent
+            index={child.index}
+            data={child.data}
+            width={child.width}
+            height={child.height}
+          />
         </WrapperComponent>
       )
     }
 
     // Calls the onRender callback if the rendered indices changed
     useEffect(() => {
-      if (typeof onRender === 'function' && stopIndex !== void 0) {
+      if (typeof onRender === 'function' && stopIndex !== void 0)
         onRender(startIndex, stopIndex, items)
-      }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [onRender, items, startIndex, stopIndex])
 
     const containerStyle = getContainerStyle(
       isScrolling,
-      totalItemHeight * itemCount - itemGap
+      (itemHeight + itemGap) * items.length - itemGap
     )
 
     return (
       <Container
-        ref={containerRef}
         id={id}
-        role={role}
         className={className}
-        tabIndex={tabIndex}
         style={
           style !== void 0
             ? Object.assign({}, containerStyle, style)
             : containerStyle
         }
+        role={role}
+        tabIndex={tabIndex}
+        ref={containerRef}
         children={children}
       />
     )

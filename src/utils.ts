@@ -17,12 +17,11 @@ export const getContainerStyle = memoizeOne(
 
 export const getCachedItemStyle = memoizeOne(
   (height: number | undefined, top: number): React.CSSProperties => ({
-    top,
-    height,
-    left: 0,
-    width: '100%',
-    writingMode: 'horizontal-tb',
     position: 'absolute',
+    writingMode: 'horizontal-tb',
+    width: '100%',
+    top,
+    left: 0,
   }),
   cmp2
 )
