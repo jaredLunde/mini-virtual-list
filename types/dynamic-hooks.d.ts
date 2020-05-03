@@ -25,7 +25,7 @@ export declare const usePositioner: (
 export interface Positioner {
   set: (index: number, height: number) => PositionerItem
   update: (index: number, height: number) => void
-  get: (index: number | undefined) => PositionerItem
+  get: (index: number) => PositionerItem
   remove: (index: number) => void
   est: (itemCount: number, defaultItemHeight: number) => number
   range: (

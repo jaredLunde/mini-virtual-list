@@ -132,8 +132,8 @@ const createPositioner = (itemGap = 0): Positioner => {
       for (; index < items.length; ++index)
         tops[index] = items[index].top += diff
     },
-    get: (index: number) => items[index],
-    remove: (index: number) => {
+    get: (index) => items[index],
+    remove: (index) => {
       const removed = items.splice(index, 1)?.[0]
       if (removed) {
         tops.splice(index, 1)
@@ -173,7 +173,7 @@ const createPositioner = (itemGap = 0): Positioner => {
 export interface Positioner {
   set: (index: number, height: number) => PositionerItem
   update: (index: number, height: number) => void
-  get: (index: number | undefined) => PositionerItem
+  get: (index: number) => PositionerItem
   remove: (index: number) => void
   est: (itemCount: number, defaultItemHeight: number) => number
   range: (
@@ -190,7 +190,7 @@ export interface PositionerItem {
   height: number
 }
 
-const emptyArr = []
+const emptyArr: [] = []
 
 const binarySearchGE = (a: number[], value: number, lo = 0) => {
   let hi = a.length - 1
