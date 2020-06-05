@@ -1,10 +1,10 @@
 import * as React from 'react'
 import {useState} from 'react'
 import useLayoutEffect from '@react-hook/passive-layout-effect'
+import useEvent from '@react-hook/event'
 
 export const useSize = <T extends HTMLElement = HTMLElement>(
-  ref: React.MutableRefObject<T | null>,
-  deps: React.DependencyList = []
+  ref: React.MutableRefObject<T | null>
 ): {width: number; height: number} => {
   const getSize = () => {
     const {current} = ref
@@ -26,18 +26,14 @@ export const useSize = <T extends HTMLElement = HTMLElement>(
     return {width: 0, height: 0}
   }
   const [size, setSize] = useState<{width: number; height: number}>(getSize)
+  const handleResize = () => setSize(getSize())
+  useEvent(window, 'resize', handleResize)
+  useEvent(window, 'orientationchange', handleResize)
 
   useLayoutEffect(() => {
-    const handleResize = () => setSize(getSize())
-    size.width === 0 && handleResize()
-    window.addEventListener('resize', handleResize)
-    window.addEventListener('orientationchange', handleResize)
-    return () => {
-      window.removeEventListener('resize', handleResize)
-      window.removeEventListener('orientationchange', handleResize)
-    }
+    setSize(getSize())
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps)
+  }, [])
 
   return size
 }

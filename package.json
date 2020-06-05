@@ -1,6 +1,6 @@
 {
   "name": "mini-virtual-list",
-  "version": "0.1.14",
+  "version": "0.2.0",
   "homepage": "https://github.com/jaredLunde/mini-virtual-list#readme",
   "repository": "github:jaredLunde/mini-virtual-list",
   "bugs": "https://github.com/jaredLunde/mini-virtual-list/issues",
@@ -22,6 +22,7 @@
   ],
   "main": "dist/main/index.js",
   "module": "dist/module/index.js",
+  "unpkg": "dist/umd/mini-virtual-list.js",
   "source": "src/index.tsx",
   "types": "types/index.d.ts",
   "files": [
@@ -29,71 +30,112 @@
     "/src",
     "/types"
   ],
+  "exports": {
+    ".": {
+      "browser": "./dist/module/index.js",
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/main/index.js",
+      "umd": "./dist/umd/mini-virtual-list.js",
+      "source": "./src/index.tsx",
+      "types": "./types/index.d.ts",
+      "default": "./dist/main/index.js"
+    },
+    "./package.json": "./package.json",
+    "./": "./"
+  },
   "sideEffects": false,
   "scripts": {
-    "build": "npm run build-main && npm run build-module && npm run build-types",
-    "build-main": "npm run compile -- -d dist/main --env-name main",
-    "build-module": "npm run compile -- -d dist/module --env-name module",
-    "build-types": "tsc -p tsconfig.json -d --outDir types --emitDeclarationOnly",
-    "check-types": "tsc --noEmit -p tsconfig.json",
-    "compile": "babel src -x .ts,.tsx --ignore \"**/*.test.ts\",\"**/test.ts\",\"**/*.test.tsx\",\"**/test.tsx\" --delete-dir-on-start",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,md,yml,json,eslintrc,prettierrc}\"",
+    "build": "lundle build",
+    "check-types": "lundle check-types",
+    "dev": "lundle build -f module,cjs -w",
+    "format": "prettier --write \"{,!(node_modules|dist|coverage)/**/}*.{ts,tsx,js,jsx,md,yml,json}\"",
     "lint": "eslint . --ext .ts,.tsx",
     "prepublishOnly": "npm run lint && npm run test && npm run build && npm run format",
     "test": "jest",
-    "validate": "npm run check-types && npm run lint && npm run test -- --coverage"
+    "validate": "lundle check-types && npm run lint && jest --coverage"
   },
   "husky": {
     "hooks": {
-      "pre-commit": "npm run build-types && git add types && lint-staged"
+      "pre-commit": "lint-staged"
     }
   },
   "lint-staged": {
     "**/*.{ts,tsx,js,jsx}": [
+      "lundle build -f types",
       "eslint",
       "prettier --write"
     ],
-    "**/*.{md,yml,json,eslintrc,prettierrc}": [
+    "**/*.{md,yml,json}": [
       "prettier --write"
     ]
   },
+  "eslintConfig": {
+    "extends": [
+      "lunde"
+    ]
+  },
+  "eslintIgnore": [
+    "node_modules",
+    "coverage",
+    "dist",
+    "test",
+    "*.config.js"
+  ],
+  "jest": {
+    "moduleDirectories": [
+      "node_modules",
+      "src",
+      "test"
+    ],
+    "testMatch": [
+      "<rootDir>/src/**/?(*.)test.{ts,tsx}"
+    ],
+    "collectCoverageFrom": [
+      "**/src/**/*.{ts,tsx}"
+    ],
+    "setupFilesAfterEnv": [
+      "./test/setup.js"
+    ],
+    "snapshotResolver": "./test/resolve-snapshot.js",
+    "globals": {
+      "__DEV__": true
+    }
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "jsxSingleQuote": true,
+    "bracketSpacing": false
+  },
   "devDependencies": {
-    "@babel/preset-react": "latest",
-    "@lunde/babel-preset-es": "latest",
-    "@testing-library/jest-dom": "^5.5.0",
-    "@testing-library/react": "^10.0.3",
+    "@testing-library/jest-dom": "latest",
+    "@testing-library/react": "latest",
     "@testing-library/react-hooks": "latest",
+    "@testing-library/user-event": "latest",
     "@types/jest": "latest",
-    "@types/node": "^13.11.0",
-    "@types/react": "^16.9.34",
-    "@types/react-dom": "^16.9.7",
-    "@typescript-eslint/eslint-plugin": "^2.30.0",
-    "@typescript-eslint/parser": "^2.30.0",
-    "babel-plugin-annotate-pure-calls": "^0.4.0",
-    "babel-plugin-optimize-react": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "babel-jest": "latest",
     "eslint": "latest",
-    "eslint-import-resolver-jest": "latest",
-    "eslint-plugin-jest": "latest",
-    "eslint-plugin-react": "latest",
-    "eslint-plugin-react-hooks": "latest",
-    "husky": "^4.2.5",
-    "jest": "^25.5.1",
-    "lint-staged": "^10.2.0",
-    "prettier": "^2.0.5",
+    "eslint-config-lunde": "latest",
+    "husky": "latest",
+    "jest": "latest",
+    "lint-staged": "latest",
+    "lundle": "latest",
+    "prettier": "latest",
     "react": "latest",
     "react-dom": "latest",
     "react-test-renderer": "latest",
-    "ts-jest": "^25.4.0",
     "typescript": "latest"
   },
   "dependencies": {
-    "@essentials/memoize-one": "^1.0.2",
-    "@essentials/request-timeout": "^1.2.0",
-    "@react-hook/passive-layout-effect": "^1.0.3",
-    "@react-hook/throttle": "^2.1.2"
+    "@essentials/memoize-one": "^1.1.0",
+    "@essentials/request-timeout": "^1.3.0",
+    "@react-hook/event": "^1.1.1",
+    "@react-hook/passive-layout-effect": "^1.1.0",
+    "@react-hook/throttle": "^2.1.4"
   },
   "peerDependencies": {
-    "prop-types": ">=15.6",
     "react": ">=16.8",
     "react-dom": ">=16.8"
   }

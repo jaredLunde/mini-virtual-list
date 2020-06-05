@@ -21,9 +21,11 @@ export const useScroller = <T extends HTMLElement = HTMLElement>(
 
   useLayoutEffect(() => {
     if (current) {
+      let didUnmount = false
       let to: ReturnType<typeof requestTimeout> | undefined
       const clearTo = () => to && clearRequestTimeout(to)
       const handleScroll = () => {
+        if (didUnmount) return
         setScrollTop(getScrollPos())
         setIsScrolling(true)
         clearTo()
@@ -38,6 +40,7 @@ export const useScroller = <T extends HTMLElement = HTMLElement>(
       return () => {
         current.removeEventListener('scroll', handleScroll)
         clearTo()
+        didUnmount = true
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
