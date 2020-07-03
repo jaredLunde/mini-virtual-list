@@ -2,9 +2,9 @@ import * as React from 'react'
 import useLayoutEffect from '@react-hook/passive-layout-effect'
 import useEvent from '@react-hook/event'
 
-export const useSize = <T extends HTMLElement = HTMLElement>(
+export function useSize<T extends HTMLElement>(
   ref: React.MutableRefObject<T | null>
-): {width: number; height: number} => {
+): {width: number; height: number} {
   const getSize = () => {
     const {current} = ref
     if (current) {
