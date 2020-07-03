@@ -4,7 +4,7 @@ import {getContainerStyle, defaultGetItemKey} from './utils'
 import type {ListPropsBase, ListItemProps} from './types'
 import type {Positioner} from './dynamic-hooks'
 
-export function useDynamicListElements<Item>({
+export function useDynamicListItems<Item>({
   items,
   width,
   height,
@@ -24,7 +24,7 @@ export function useDynamicListElements<Item>({
   isScrolling,
   onRender,
   render: RenderComponent,
-}: UseDynamicListElementsOptions<Item>) {
+}: UseDynamicListItemsOptions<Item>) {
   const children: (
     | ListItemProps<Item>
     | React.ReactElement<ListItemProps<Item>>
@@ -117,7 +117,7 @@ export function useDynamicListElements<Item>({
   )
 }
 
-export interface UseDynamicListElementsOptions<Item>
+export interface UseDynamicListItemsOptions<Item>
   extends Omit<ListPropsBase<Item>, 'itemGap'> {
   readonly positioner: Positioner
   readonly itemHeightEstimate?: number
@@ -126,7 +126,7 @@ export interface UseDynamicListElementsOptions<Item>
 
 export function DynamicList<Item>(props: DynamicListProps<Item>) {
   const positioner = usePositioner(props.itemGap)
-  return useDynamicListElements(Object.assign({positioner}, props))
+  return useDynamicListItems(Object.assign({positioner}, props))
 }
 
 let didEverMount = '0'
