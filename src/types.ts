@@ -1,4 +1,5 @@
-export interface ListPropsBase {
+export interface ListPropsBase<Item> {
+  readonly innerRef: React.Ref<any>
   readonly width: number
   readonly height: number
   readonly scrollTop: number
@@ -9,7 +10,7 @@ export interface ListPropsBase {
   readonly style?: React.CSSProperties
   readonly role?: string
   readonly tabIndex?: number | string
-  readonly items: any[]
+  readonly items: Item[]
   readonly itemAs?: keyof JSX.IntrinsicElements | React.ComponentType<any>
   readonly itemGap?: number
   readonly itemKey?: (data: any, index: number) => string | number
@@ -17,13 +18,13 @@ export interface ListPropsBase {
   readonly onRender?: (
     startIndex: number,
     stopIndex: number | undefined,
-    items: any[]
+    items: Item[]
   ) => void
 }
 
-export interface ListItemProps {
+export interface ListItemProps<Item> {
   index: number
-  data: any
+  data: Item
   width: number
   height: number
   style: React.CSSProperties

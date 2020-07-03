@@ -2,7 +2,7 @@ import {useEffect, useState, useRef} from 'react'
 import useLayoutEffect from '@react-hook/passive-layout-effect'
 import type {ListItemProps} from './types'
 
-export const useDynamicList = ({
+export function useDynamicList<Item>({
   items,
   width,
   height,
@@ -10,11 +10,11 @@ export const useDynamicList = ({
   scrollTop,
   itemHeightEstimate = 32,
   positioner,
-}: UseDynamicListOptions) => {
+}: UseDynamicListOptions<Item>) {
   const itemCount = items.length
   const measuredCount = positioner.size()
   overscanBy = height * overscanBy
-  const childProps: ListItemProps[] = []
+  const childProps: ListItemProps<Item>[] = []
 
   positioner.range(
     Math.max(0, scrollTop - overscanBy / 2),
@@ -59,9 +59,9 @@ export const useDynamicList = ({
   return childProps
 }
 
-export interface UseDynamicListOptions {
+export interface UseDynamicListOptions<Item> {
   positioner: Positioner
-  items: any[]
+  items: Item[]
   width: number
   height: number
   itemHeightEstimate?: number

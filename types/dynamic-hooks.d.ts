@@ -1,6 +1,6 @@
 /// <reference types="react" />
 import type {ListItemProps} from './types'
-export declare const useDynamicList: ({
+export declare function useDynamicList<Item>({
   items,
   width,
   height,
@@ -8,10 +8,10 @@ export declare const useDynamicList: ({
   scrollTop,
   itemHeightEstimate,
   positioner,
-}: UseDynamicListOptions) => ListItemProps[]
-export interface UseDynamicListOptions {
+}: UseDynamicListOptions<Item>): ListItemProps<Item>[]
+export interface UseDynamicListOptions<Item> {
   positioner: Positioner
-  items: any[]
+  items: Item[]
   width: number
   height: number
   itemHeightEstimate?: number

@@ -1,11 +1,10 @@
 import * as React from 'react'
-import {useCallback, useState, useRef, useEffect} from 'react'
 import {useDynamicList, usePositioner} from './dynamic-hooks'
 import {getContainerStyle, defaultGetItemKey} from './utils'
 import type {ListPropsBase, ListItemProps} from './types'
 import type {Positioner} from './dynamic-hooks'
 
-export const useDynamicListElements = ({
+export function useDynamicListElements<Item>({
   items,
   width,
   height,
@@ -13,22 +12,22 @@ export const useDynamicListElements = ({
   scrollTop,
   itemHeightEstimate = 32,
   positioner,
-  containerRef,
+  innerRef,
   as: Container = 'div',
   id,
   className,
   style,
   role = 'list',
-  tabIndex = 0,
+  tabIndex,
   itemAs: WrapperComponent = 'div',
   itemKey = defaultGetItemKey,
   isScrolling,
   onRender,
   render: RenderComponent,
-}: UseDynamicListElementsOptions) => {
+}: UseDynamicListElementsOptions<Item>) {
   const children: (
-    | ListItemProps
-    | React.ReactElement<ListItemProps>
+    | ListItemProps<Item>
+    | React.ReactElement<ListItemProps<Item>>
   )[] = useDynamicList({
     items,
     width,
@@ -39,7 +38,7 @@ export const useDynamicListElements = ({
     positioner,
   })
   const forceUpdate_ = useForceUpdate()
-  const updating = useRef(false)
+  const updating = React.useRef(false)
   // batches calls to force update
   updating.current = false
   const forceUpdate = () => {
@@ -48,14 +47,14 @@ export const useDynamicListElements = ({
       forceUpdate_()
     }
   }
-  const itemRole = role + 'item'
+  const itemRole = role && role + 'item'
   let needsFreshBatch = false
   let startIndex = 0
   let stopIndex: number | undefined
   let i = 0
 
   for (; i < children.length; i++) {
-    const child = children[i] as ListItemProps
+    const child = children[i] as ListItemProps<Item>
     needsFreshBatch = needsFreshBatch || child.height === -1
 
     if (child.height !== -1) {
@@ -77,17 +76,17 @@ export const useDynamicListElements = ({
         pos={positioner}
         render={RenderComponent}
       />
-    ) as React.ReactElement<ListItemProps>
+    ) as React.ReactElement<ListItemProps<Item>>
   }
 
   // If we needed a fresh batch we should reload our components with the measured
   // sizes
-  useEffect(() => {
+  React.useEffect(() => {
     if (needsFreshBatch) forceUpdate()
     // eslint-disable-next-line
   }, [needsFreshBatch])
   // Calls the onRender callback if the rendered indices changed
-  useEffect(() => {
+  React.useEffect(() => {
     if (typeof onRender === 'function' && stopIndex !== void 0)
       onRender(startIndex, stopIndex, items)
     // Resets the container key for SSR hydration
@@ -111,45 +110,33 @@ export const useDynamicListElements = ({
       }
       role={role}
       tabIndex={tabIndex}
-      ref={containerRef}
+      ref={innerRef}
       children={children}
       key={didEverMount}
     />
   )
 }
 
-export interface UseDynamicListElementsOptions
-  extends Omit<ListPropsBase, 'itemGap'> {
+export interface UseDynamicListElementsOptions<Item>
+  extends Omit<ListPropsBase<Item>, 'itemGap'> {
   readonly positioner: Positioner
-  readonly containerRef?:
-    | ((element: HTMLElement) => void)
-    | React.MutableRefObject<HTMLElement | null>
-    | null
   readonly itemHeightEstimate?: number
-  readonly render: React.ComponentType<DynamicListRenderProps>
+  readonly render: React.ComponentType<DynamicListRenderProps<Item>>
 }
 
-export const DynamicList = React.forwardRef<any, DynamicListProps>(
-  (props, containerRef) => {
-    const positioner = usePositioner(props.itemGap)
-    return useDynamicListElements(
-      Object.assign({positioner, containerRef}, props)
-    )
-  }
-)
+export function DynamicList<Item>(props: DynamicListProps<Item>) {
+  const positioner = usePositioner(props.itemGap)
+  return useDynamicListElements(Object.assign({positioner}, props))
+}
 
 let didEverMount = '0'
 
-export interface DynamicListProps extends ListPropsBase {
+export interface DynamicListProps<Item> extends ListPropsBase<Item> {
   readonly itemHeightEstimate?: number
-  readonly render: React.ComponentType<DynamicListRenderProps>
+  readonly render: React.ComponentType<DynamicListRenderProps<Item>>
 }
 
-const DynamicListItem: React.FC<
-  DynamicListItemProps & {
-    as: keyof JSX.IntrinsicElements | React.ComponentType<any>
-  }
-> = ({
+function DynamicListItem<Item>({
   role,
   style,
   index,
@@ -160,9 +147,11 @@ const DynamicListItem: React.FC<
   meas,
   pos,
   render: RenderComponent,
-}) => {
-  const ref = useRef<HTMLElement | null>(null)
-  const measure = useCallback(() => {
+}: DynamicListItemProps<Item> & {
+  as: keyof JSX.IntrinsicElements | React.ComponentType<any>
+}) {
+  const ref = React.useRef<HTMLElement | null>(null)
+  const measure = React.useCallback(() => {
     const current = ref.current
     if (current) {
       pos.update(index, current.offsetHeight)
@@ -193,22 +182,22 @@ const DynamicListItem: React.FC<
   )
 }
 
-interface DynamicListItemProps {
-  as: DynamicListProps['itemAs']
+interface DynamicListItemProps<Item> {
+  as: DynamicListProps<Item>['itemAs']
   role: string
   style: React.CSSProperties
   index: number
-  data: any
+  data: Item
   width: number
   height: number | undefined
-  render: React.ComponentType<DynamicListRenderProps>
+  render: React.ComponentType<DynamicListRenderProps<Item>>
   pos: Positioner
   meas: () => void
 }
 
-export interface DynamicListRenderProps {
+export interface DynamicListRenderProps<Item> {
   index: number
-  data: any
+  data: Item
   width: number
   height: number | undefined
   measure: () => void
@@ -216,12 +205,8 @@ export interface DynamicListRenderProps {
 }
 
 const useForceUpdate = (): (() => void) => {
-  const setState = useState(emptyObj)[1]
-  return useRef(() => setState({})).current
+  const setState = React.useState(emptyObj)[1]
+  return React.useRef(() => setState({})).current
 }
 
 const emptyObj = {}
-
-if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
-  DynamicList.displayName = 'DynamicList'
-}

@@ -1,7 +1,7 @@
 import * as React from 'react'
 import type {ListPropsBase} from './types'
 import type {Positioner} from './dynamic-hooks'
-export declare const useDynamicListElements: ({
+export declare function useDynamicListElements<Item>({
   items,
   width,
   height,
@@ -9,7 +9,7 @@ export declare const useDynamicListElements: ({
   scrollTop,
   itemHeightEstimate,
   positioner,
-  containerRef,
+  innerRef,
   as: Container,
   id,
   className,
@@ -21,27 +21,23 @@ export declare const useDynamicListElements: ({
   isScrolling,
   onRender,
   render: RenderComponent,
-}: UseDynamicListElementsOptions) => JSX.Element
-export interface UseDynamicListElementsOptions
-  extends Omit<ListPropsBase, 'itemGap'> {
+}: UseDynamicListElementsOptions<Item>): JSX.Element
+export interface UseDynamicListElementsOptions<Item>
+  extends Omit<ListPropsBase<Item>, 'itemGap'> {
   readonly positioner: Positioner
-  readonly containerRef?:
-    | ((element: HTMLElement) => void)
-    | React.MutableRefObject<HTMLElement | null>
-    | null
   readonly itemHeightEstimate?: number
-  readonly render: React.ComponentType<DynamicListRenderProps>
+  readonly render: React.ComponentType<DynamicListRenderProps<Item>>
 }
-export declare const DynamicList: React.ForwardRefExoticComponent<
-  DynamicListProps & React.RefAttributes<any>
->
-export interface DynamicListProps extends ListPropsBase {
+export declare function DynamicList<Item>(
+  props: DynamicListProps<Item>
+): JSX.Element
+export interface DynamicListProps<Item> extends ListPropsBase<Item> {
   readonly itemHeightEstimate?: number
-  readonly render: React.ComponentType<DynamicListRenderProps>
+  readonly render: React.ComponentType<DynamicListRenderProps<Item>>
 }
-export interface DynamicListRenderProps {
+export interface DynamicListRenderProps<Item> {
   index: number
-  data: any
+  data: Item
   width: number
   height: number | undefined
   measure: () => void

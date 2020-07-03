@@ -1,5 +1,5 @@
 import type {ListItemProps} from './types'
-export declare const useList: ({
+export declare function useList<Item>({
   items,
   width,
   height,
@@ -7,9 +7,9 @@ export declare const useList: ({
   scrollTop,
   itemHeight,
   itemGap,
-}: UseListOptions) => ListItemProps[]
-export interface UseListOptions {
-  items: any[]
+}: UseListOptions<Item>): ListItemProps<Item>[]
+export interface UseListOptions<Item> {
+  items: Item[]
   width: number
   height: number
   itemHeight: number

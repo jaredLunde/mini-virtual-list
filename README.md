@@ -37,8 +37,9 @@ A tiny, speedy list virtualization library for React
 - [x] **Versatile** Supports list items with both variable and fixed heights.
   - [Variable size example on **CodeSandbox**](https://codesandbox.io/s/mini-virtual-list-example-r7fxt?file=/src/App.js)
   - [Fixed size example on **CodeSandbox**](https://codesandbox.io/s/mini-virtual-list-fixed-example-q96ty?file=/src/App.js)
-- [x] **Blazing™ fast** This component can seamless render tens of thousands of items without issue because it uses binary search (`O(log n)` worst case) to determine which elements in are visible in the window at a given time.
-- [x] **TypeScript** Woohoo, superior autocomplete and type safety means fewer bugs in your implementation.
+- [x] **Blazing™ fast** The fixed-size hooks and components have `O(1)` search performance, while the dynamic-size hooks and
+      components use binary search and have `O(log(n))` worst-case performance.
+- [x] **TypeScript** Woohoo! Superior autocomplete and _strict types_ mean fewer bugs in your implementation.
 
 ## Quick Start
 

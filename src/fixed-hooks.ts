@@ -1,6 +1,6 @@
 import type {ListItemProps} from './types'
 
-export const useList = ({
+export function useList<Item>({
   items,
   width,
   height,
@@ -8,7 +8,7 @@ export const useList = ({
   scrollTop,
   itemHeight,
   itemGap = 0,
-}: UseListOptions) => {
+}: UseListOptions<Item>) {
   const totalItemHeight = itemHeight + itemGap
   overscanBy = height * overscanBy
   let index = Math.floor(
@@ -18,7 +18,7 @@ export const useList = ({
     items.length,
     Math.ceil((scrollTop + overscanBy) / totalItemHeight)
   )
-  const childProps: ListItemProps[] = []
+  const childProps: ListItemProps<Item>[] = []
 
   for (; index < stopIndex; index++) {
     childProps.push({
@@ -38,8 +38,8 @@ export const useList = ({
   return childProps
 }
 
-export interface UseListOptions {
-  items: any[]
+export interface UseListOptions<Item> {
+  items: Item[]
   width: number
   height: number
   itemHeight: number

@@ -1,5 +1,4 @@
 import * as React from 'react'
-import {useState} from 'react'
 import useLayoutEffect from '@react-hook/passive-layout-effect'
 import {requestTimeout, clearRequestTimeout} from '@essentials/request-timeout'
 import {useThrottle} from '@react-hook/throttle'
@@ -17,7 +16,7 @@ export const useScroller = <T extends HTMLElement = HTMLElement>(
       ? current.scrollTop
       : current.pageYOffset || current.scrollY
   const [scrollTop, setScrollTop] = useThrottle(getScrollPos, fps)
-  const [isScrolling, setIsScrolling] = useState(false)
+  const [isScrolling, setIsScrolling] = React.useState(false)
 
   useLayoutEffect(() => {
     if (current) {

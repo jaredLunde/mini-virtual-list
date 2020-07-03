@@ -11,4 +11,5 @@ export const getContainerStyle = memoizeOne(
     pointerEvents: isScrolling ? 'none' : void 0,
   })
 )
+
 export const defaultGetItemKey = (_: any[], i: number): number => i
