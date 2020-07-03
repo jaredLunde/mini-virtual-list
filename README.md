@@ -38,7 +38,7 @@ A tiny, speedy list virtualization library for React
   - [Variable size example on **CodeSandbox**](https://codesandbox.io/s/mini-virtual-list-example-r7fxt?file=/src/App.js)
   - [Fixed size example on **CodeSandbox**](https://codesandbox.io/s/mini-virtual-list-fixed-example-q96ty?file=/src/App.js)
 - [x] **Blazing™ fast** The fixed-size hooks and components have `O(1)` search performance, while the dynamic-size hooks and
-      components use binary search and have `O(log(n))` worst-case performance.
+      components use binary search and have `O(log(n))` worst case performance.
 - [x] **TypeScript** Woohoo! Superior autocomplete and _strict types_ mean fewer bugs in your implementation.
 
 ## Quick Start
@@ -60,76 +60,42 @@ const ListComponent = () => {
   return (
     <div
       style={{
-        border: '1px solid #999',
-        width: '100%',
-        height: 400,
+        height: 540,
+        width: 320,
         overflow: 'auto',
       }}
       ref={ref}
     >
       <List
         items={items}
-        itemHeightEstimate={162 / 2}
+        itemHeight={36}
         {...size}
         {...scroll}
-        render={Card}
+        render={FakeCard}
       />
     </div>
   )
 }
-
-// Variable height lists require your component to forward a ref to the container.
-// Fixed height lists do not.
-const Card = React.forwardRef(
-  ({index, measure, style, data: {id, initialHeight}}, ref) => {
-    const [height, setHeight] = useState(initialHeight)
-
-    useLayoutEffect(() => {
-      // Remeasures the cell any time the `height` state changes
-      // But this could be anything causing this effect. An image load,
-      // a disclosure opening, etc.
-      measure()
-    }, [measure, height])
-
-    return (
-      <div
-        style={{
-          ...style,
-          borderBottom: '1px solid #999',
-          padding: '8px',
-          height,
-        }}
-        ref={ref}
-      >
-        Hello {id}
-        <button
-          onClick={() => {
-            setHeight(randInt(40, 140))
-          }}
-          style={{marginLeft: '0.5rem'}}
-        >
-          Change height
-        </button>
-      </div>
-    )
-  }
-)
 ```
 
 ## API
 
 ### Components
 
-| Component         | Description                              |
-| ----------------- | ---------------------------------------- |
-| [`<List>`](#list) | A tiny, fast virtualized list component. |
+| Component                       | Description                                       |
+| ------------------------------- | ------------------------------------------------- |
+| [`<List>`](#list)               | A tiny, fast fixed-size virtual list component.   |
+| [`<DynamicList>`](#dynamiclist) | A tiny, fast dynamic-size virtual list component. |
 
 ### Hooks
 
-| Hook                            | Description                                                                                                                                                                                                                                     |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`useSize()`](#usesize)         | A convenient hook for providing the container size to the `<List>` component                                                                                                                                                                    |
-| [`useScroller()`](#usescroller) | A hook used for tracking a container node's scroll position. These values are used when calculating the number of rows to render and determining when we should disable pointer events on the masonry container to maximize scroll performance. |
+| Hook                                  | Description                                                                                                                                                                                                                                     |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`useList()`](#uselist)               | A fixed-size virtual list hook                                                                                                                                                                                                                  |
+| [`useDynamicList()`](#usedynamiclist) | A dynamic-size virtual list hook                                                                                                                                                                                                                |
+| [`usePositioner()`](#usepositioner)   | A list item positioner for `useDynamicList()`](#usedynamiclist)                                                                                                                                                                                 |
+| [`useSize()`](#usesize)               | A convenient hook for providing the container size to the `<List>` component                                                                                                                                                                    |
+| [`useScroller()`](#usescroller)       | A hook used for tracking a container node's scroll position. These values are used when calculating the number of rows to render and determining when we should disable pointer events on the masonry container to maximize scroll performance. |
 
 ---
 
@@ -140,6 +106,46 @@ const Card = React.forwardRef(
 | Prop | Type | Default | Required? | Description |
 | ---- | ---- | ------- | --------- | ----------- |
 |      |      |         |           |             |
+
+---
+
+### &lt;DynamicList&gt;
+
+#### Props
+
+| Prop | Type | Default | Required? | Description |
+| ---- | ---- | ------- | --------- | ----------- |
+|      |      |         |           |             |
+
+---
+
+### useList()
+
+#### Arguments
+
+| Argument | Type | Default | Required? | Description |
+| -------- | ---- | ------- | --------- | ----------- |
+|          |      |         |           |             |
+
+---
+
+### useDynamicList()
+
+#### Arguments
+
+| Argument | Type | Default | Required? | Description |
+| -------- | ---- | ------- | --------- | ----------- |
+|          |      |         |           |             |
+
+---
+
+### usePositioner()
+
+#### Arguments
+
+| Argument | Type | Default | Required? | Description |
+| -------- | ---- | ------- | --------- | ----------- |
+|          |      |         |           |             |
 
 ---
 
