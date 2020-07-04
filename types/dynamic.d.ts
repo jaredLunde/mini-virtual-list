@@ -1,7 +1,7 @@
 import * as React from 'react'
 import type {ListPropsBase} from './types'
 import type {Positioner} from './dynamic-hooks'
-export declare function useDynamicListElements<Item>({
+export declare function useDynamicListItems<Item>({
   items,
   width,
   height,
@@ -21,8 +21,8 @@ export declare function useDynamicListElements<Item>({
   isScrolling,
   onRender,
   render: RenderComponent,
-}: UseDynamicListElementsOptions<Item>): JSX.Element
-export interface UseDynamicListElementsOptions<Item>
+}: UseDynamicListItemsOptions<Item>): JSX.Element
+export interface UseDynamicListItemsOptions<Item>
   extends Omit<ListPropsBase<Item>, 'itemGap'> {
   readonly positioner: Positioner
   readonly itemHeightEstimate?: number

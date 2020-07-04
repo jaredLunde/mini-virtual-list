@@ -3,12 +3,12 @@ import useLayoutEffect from '@react-hook/passive-layout-effect'
 import {requestTimeout, clearRequestTimeout} from '@essentials/request-timeout'
 import {useThrottle} from '@react-hook/throttle'
 
-export const useScroller = <T extends HTMLElement = HTMLElement>(
-  ref: React.MutableRefObject<T | null> | Window,
-  offset = 0,
-  fps = 12
-): {scrollTop: number; isScrolling: boolean} => {
-  const current = 'current' in ref ? ref.current : ref
+export function useScroller<T extends HTMLElement>(
+  ref: Window | React.MutableRefObject<T | null> | T | null,
+  options: UseScrollerOptions = {}
+): {scrollTop: number; isScrolling: boolean} {
+  const {offset = 0, fps = 12} = options
+  const current = ref && 'current' in ref ? ref.current : ref
   const getScrollPos = () =>
     !current
       ? 0
@@ -46,4 +46,9 @@ export const useScroller = <T extends HTMLElement = HTMLElement>(
   }, [current, fps])
 
   return {scrollTop: Math.max(0, scrollTop - offset), isScrolling}
+}
+
+export interface UseScrollerOptions {
+  offset?: number
+  fps?: number
 }
