@@ -57,13 +57,12 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-staged",
+      "pre-commit": "lundle check-types && lint-staged",
       "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
     }
   },
   "lint-staged": {
     "**/*.{ts,tsx,js,jsx}": [
-      "lundle build -f types",
       "eslint",
       "prettier --write"
     ],
