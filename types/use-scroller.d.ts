@@ -1,8 +1,8 @@
 import * as React from 'react'
-export declare const useScroller: <T extends HTMLElement = HTMLElement>(
-  ref: Window | React.MutableRefObject<T | null>,
+export declare function useScroller<T extends HTMLElement>(
+  ref: Window | React.MutableRefObject<T | null> | T | null,
   options?: UseScrollerOptions
-) => {
+): {
   scrollTop: number
   isScrolling: boolean
 }
