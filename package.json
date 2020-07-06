@@ -50,7 +50,7 @@
     "dev": "lundle build -f module,cjs -w",
     "format": "prettier --write \"{,!(node_modules|dist|coverage)/**/}*.{ts,tsx,js,jsx,md,yml,json}\"",
     "lint": "eslint . --ext .ts,.tsx",
-    "prepublishOnly": "npm run lint && npm run test && npm run build && npm run format",
+    "prerelease": "npm run validate && npm run build",
     "release": "git add . && standard-version -a",
     "test": "jest",
     "validate": "lundle check-types && npm run lint && jest --coverage"
