@@ -1,5 +1,5 @@
 export interface ListPropsBase<Item> {
-  readonly innerRef: React.Ref<any>
+  readonly innerRef?: React.Ref<any>
   readonly width: number
   readonly height: number
   readonly scrollTop: number
