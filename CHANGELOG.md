@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.3.1](https://github.com/jaredLunde/mini-virtual-list/compare/v0.3.0...v0.3.1) (2020-08-20)
+
+### Bug Fixes
+
+- **types:** make innerRef optional ([255081b](https://github.com/jaredLunde/mini-virtual-list/commit/255081bf53c31a6a0e6918610557651e56f72aec))
+
 ## [0.3.0](https://github.com/jaredLunde/mini-virtual-list/compare/v0.2.0...v0.3.0) (2020-08-20)
 
 ### ⚠ BREAKING CHANGES
