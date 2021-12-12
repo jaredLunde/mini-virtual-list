@@ -1,4 +1,4 @@
-import type {ListItemProps} from './types'
+import type { ListItemProps } from "./types";
 export declare function useList<Item>({
   items,
   width,
@@ -7,13 +7,13 @@ export declare function useList<Item>({
   scrollTop,
   itemHeight,
   itemGap,
-}: UseListOptions<Item>): ListItemProps<Item>[]
+}: UseListOptions<Item>): ListItemProps<Item>[];
 export interface UseListOptions<Item> {
-  items: Item[]
-  width: number
-  height: number
-  itemHeight: number
-  itemGap?: number
-  overscanBy?: number
-  scrollTop: number
+  items: Item[];
+  width: number;
+  height: number;
+  itemHeight: number;
+  itemGap?: number;
+  overscanBy?: number;
+  scrollTop: number;
 }

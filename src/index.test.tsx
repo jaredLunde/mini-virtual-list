@@ -5,6 +5,6 @@
 // import {List} from './index'
 
 // describe('<List>', () => {})
-it('passes', () => {
-  expect(true).toBe(true)
-})
+it("passes", () => {
+  expect(true).toBe(true);
+});

@@ -44,25 +44,25 @@ A tiny, speedy list virtualization library for React
 ## Quick Start
 
 ```jsx harmony
-import React, {useState, useLayoutEffect, useRef} from 'react'
-import randInt from 'random-int'
-import {List, useScroller, useSize} from 'mini-virtual-list'
+import React, { useState, useLayoutEffect, useRef } from "react";
+import randInt from "random-int";
+import { List, useScroller, useSize } from "mini-virtual-list";
 
-let items = []
+let items = [];
 for (let i = 10000 * cur; i < cur * 10000 + 10000; i++)
-  items.push({id: i, initialHeight: randInt(40, 140)})
+  items.push({ id: i, initialHeight: randInt(40, 140) });
 
 const ListComponent = () => {
-  const ref = useRef(null)
-  const scroll = useScroller(ref)
-  const size = useSize(ref)
+  const ref = useRef(null);
+  const scroll = useScroller(ref);
+  const size = useSize(ref);
 
   return (
     <div
       style={{
         height: 540,
         width: 320,
-        overflow: 'auto',
+        overflow: "auto",
       }}
       ref={ref}
     >
@@ -74,8 +74,8 @@ const ListComponent = () => {
         render={FakeCard}
       />
     </div>
-  )
-}
+  );
+};
 ```
 
 ## API

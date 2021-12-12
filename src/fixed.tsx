@@ -1,7 +1,7 @@
-import * as React from 'react'
-import {useList} from './fixed-hooks'
-import {getContainerStyle, defaultGetItemKey} from './utils'
-import type {ListPropsBase, ListItemProps} from './types'
+import * as React from "react";
+import { useList } from "./fixed-hooks";
+import { getContainerStyle, defaultGetItemKey } from "./utils";
+import type { ListPropsBase, ListItemProps } from "./types";
 
 export function List<Item>({
   items,
@@ -11,13 +11,13 @@ export function List<Item>({
   scrollTop,
   itemHeight,
   itemGap = 0,
-  as: Container = 'div',
+  as: Container = "div",
   id,
   className,
   style,
-  role = 'list',
+  role = "list",
   tabIndex,
-  itemAs: WrapperComponent = 'div',
+  itemAs: WrapperComponent = "div",
   itemKey = defaultGetItemKey,
   isScrolling,
   onRender,
@@ -35,17 +35,17 @@ export function List<Item>({
     scrollTop,
     itemHeight,
     itemGap,
-  })
-  const itemRole = role && role + 'item'
+  });
+  const itemRole = role && role + "item";
   const startIndex = children[0]
     ? (children[0] as ListItemProps<Item>).index
-    : 0
-  let stopIndex: number | undefined
-  let i = 0
+    : 0;
+  let stopIndex: number | undefined;
+  let i = 0;
 
   for (; i < children.length; i++) {
-    const child = children[i] as ListItemProps<Item>
-    stopIndex = child.index
+    const child = children[i] as ListItemProps<Item>;
+    stopIndex = child.index;
     children[i] = (
       <WrapperComponent
         key={itemKey(child.data, child.index)}
@@ -59,20 +59,20 @@ export function List<Item>({
           height={child.height}
         />
       </WrapperComponent>
-    )
+    );
   }
 
   // Calls the onRender callback if the rendered indices changed
   React.useEffect(() => {
-    if (typeof onRender === 'function' && stopIndex !== void 0)
-      onRender(startIndex, stopIndex, items)
+    if (typeof onRender === "function" && stopIndex !== void 0)
+      onRender(startIndex, stopIndex, items);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onRender, items, startIndex, stopIndex])
+  }, [onRender, items, startIndex, stopIndex]);
 
   const containerStyle = getContainerStyle(
     isScrolling,
     (itemHeight + itemGap) * items.length - itemGap
-  )
+  );
 
   return (
     <Container
@@ -88,17 +88,17 @@ export function List<Item>({
       ref={innerRef}
       children={children}
     />
-  )
+  );
 }
 
 export interface ListProps<Item> extends ListPropsBase<Item> {
-  readonly itemHeight: number
-  readonly render: React.ComponentType<ListRenderProps<Item>>
+  readonly itemHeight: number;
+  readonly render: React.ComponentType<ListRenderProps<Item>>;
 }
 
 export interface ListRenderProps<Item> {
-  index: number
-  data: Item
-  width: number
-  [prop: string]: any
+  index: number;
+  data: Item;
+  width: number;
+  [prop: string]: any;
 }

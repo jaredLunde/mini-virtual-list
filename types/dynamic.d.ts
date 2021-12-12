@@ -1,6 +1,6 @@
-import * as React from 'react'
-import type {ListPropsBase} from './types'
-import type {Positioner} from './dynamic-hooks'
+import * as React from "react";
+import type { ListPropsBase } from "./types";
+import type { Positioner } from "./dynamic-hooks";
 export declare function useDynamicListItems<Item>({
   items,
   width,
@@ -21,25 +21,25 @@ export declare function useDynamicListItems<Item>({
   isScrolling,
   onRender,
   render: RenderComponent,
-}: UseDynamicListItemsOptions<Item>): JSX.Element
+}: UseDynamicListItemsOptions<Item>): JSX.Element;
 export interface UseDynamicListItemsOptions<Item>
-  extends Omit<ListPropsBase<Item>, 'itemGap'> {
-  readonly positioner: Positioner
-  readonly itemHeightEstimate?: number
-  readonly render: React.ComponentType<DynamicListRenderProps<Item>>
+  extends Omit<ListPropsBase<Item>, "itemGap"> {
+  readonly positioner: Positioner;
+  readonly itemHeightEstimate?: number;
+  readonly render: React.ComponentType<DynamicListRenderProps<Item>>;
 }
 export declare function DynamicList<Item>(
   props: DynamicListProps<Item>
-): JSX.Element
+): JSX.Element;
 export interface DynamicListProps<Item> extends ListPropsBase<Item> {
-  readonly itemHeightEstimate?: number
-  readonly render: React.ComponentType<DynamicListRenderProps<Item>>
+  readonly itemHeightEstimate?: number;
+  readonly render: React.ComponentType<DynamicListRenderProps<Item>>;
 }
 export interface DynamicListRenderProps<Item> {
-  index: number
-  data: Item
-  width: number
-  height: number | undefined
-  measure: () => void
-  [prop: string]: any
+  index: number;
+  data: Item;
+  width: number;
+  height: number | undefined;
+  measure: () => void;
+  [prop: string]: any;
 }
