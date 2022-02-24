@@ -13,12 +13,12 @@ export function useSize<T extends HTMLElement>(
       return {
         width:
           current.clientWidth -
-          float(computedStyle.paddingTop) -
-          float(computedStyle.paddingBottom),
-        height:
-          current.clientHeight -
           float(computedStyle.paddingLeft) -
           float(computedStyle.paddingRight),
+        height:
+          current.clientHeight -
+          float(computedStyle.paddingTop) -
+          float(computedStyle.paddingBottom),
       };
     }
 
